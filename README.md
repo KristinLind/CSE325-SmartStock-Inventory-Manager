@@ -3,6 +3,21 @@
 
 ## CSE325 – Group Project
 
+## Team Members — CSE 325 Team 03
+
+- **Kristin Lind** — Week 02 Group Leader
+- **Isaac Miti** — Team Member
+- **Raymond Mukonda** — Team Member
+- **Rex Jonathan Kapoloma** — Team Member
+
+## Team Collaboration
+
+Our team will collaborate to plan, design, develop, and test a .NET Blazor web application for CSE 325.
+
+We will use GitHub for version control, feature branches, and pull requests. Trello will help us organize assignments, track progress, and coordinate development.
+
+Our goal is to create a functional application while ensuring that every team member has opportunities to contribute to the project.
+
 ### Project Overview
 SmartStock is an inventory management application designed for small online retail businesses specializing in home and kitchen products.
 
