@@ -1,0 +1,543 @@
+@page "/inventory"
+@rendermode InteractiveServer
+
+<PageTitle>SmartStock | Inventory Management</PageTitle>
+
+<div class="inventory-manager">
+    <div class="inventory-header">
+        <div>
+            <p class="inventory-eyebrow">SMARTSTOCK INVENTORY MANAGER</p>
+            <h1>Inventory Management</h1>
+            <p>Add, update, and organize your kitchen products.</p>
+        </div>
+
+        <button class="inventory-add-button"
+                @onclick="ShowAddForm">
+            + Add Product
+        </button>
+    </div>
+
+    <div class="inventory-summary">
+        <div class="inventory-summary-card">
+            <span>Total Products</span>
+            <strong>@products.Count</strong>
+        </div>
+        <div class="inventory-summary-card">
+            <span>Low Stock Items</span>
+            <strong>@products.Count(p => p.Quantity < 5)</strong>
+        </div>
+        <div class="inventory-summary-card">
+            <span>Inventory Value</span>
+            <strong>@products.Sum(p => p.Price * p.Quantity).ToString("C")</strong>
+        </div>
+    </div>
+
+    @if (showForm)
+    {
+        <section class="inventory-form-card">
+            <h2>@(editingId == null ? "Add New Product" : "Edit Product")</h2>
+
+            <div class="inventory-form-grid">
+                <div>
+                    <label for="product-name">Product Name</label>
+                    <input id="product-name" @bind="formName" />
+                </div>
+
+                <div>
+                    <label for="product-category">Category</label>
+                    <select id="product-category" @bind="formCategory">
+                        <option value="Appliances">Appliances</option>
+                        <option value="Cookware">Cookware</option>
+                        <option value="Utensils">Utensils</option>
+                        <option value="Kitchen Accessories">Kitchen Accessories</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="product-price">Unit Price ($)</label>
+                    <input id="product-price"
+                           type="number"
+                           min="0"
+                           step="0.01"
+                           @bind="formPrice" />
+                </div>
+
+                <div>
+                    <label for="product-quantity">Quantity</label>
+                    <input id="product-quantity"
+                           type="number"
+                           min="0"
+                           @bind="formQuantity" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="inventory-error" role="alert">@errorMessage</p>
+            }
+
+            <div class="inventory-form-actions">
+                <button class="inventory-save-button"
+                        @onclick="SaveProduct">
+                    @(editingId == null ? "Save Product" : "Update Product")
+                </button>
+
+                <button class="inventory-cancel-button"
+                        @onclick="CancelForm">
+                    Cancel
+                </button>
+            </div>
+        </section>
+    }
+    @if (productToDeleteId != null)
+{
+    <div class="inventory-form-card" role="alertdialog"
+         aria-label="Confirm product deletion">
+        <h2>Delete Product?</h2>
+        <p>Are you sure you want to delete this product?</p>
+
+        <div class="inventory-form-actions">
+            <button class="delete-button"
+                    @onclick="DeleteConfirmed">
+                Yes, Delete
+            </button>
+
+            <button class="inventory-cancel-button"
+                    @onclick="CancelDelete">
+                Cancel
+            </button>
+        </div>
+    </div>
+}
+    <section class="inventory-table-card">
+        <div class="inventory-table-heading">
+            <h2>Product Inventory</h2>
+            <span>@products.Count products</span>
+        </div>
+
+        <div class="inventory-table-scroll">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var product in products)
+                    {
+                        <tr>
+                            <td><strong>@product.Name</strong></td>
+                            <td>@product.Category</td>
+                            <td>@product.Price.ToString("C")</td>
+                            <td>@product.Quantity</td>
+                            <td>
+                                @if (product.Quantity == 0)
+                                {
+                                    <span class="stock-badge out-of-stock">Out of Stock</span>
+                                }
+                                else if (product.Quantity < 5)
+                                {
+                                    <span class="stock-badge low-stock">Low Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="stock-badge in-stock">In Stock</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="inventory-row-actions">
+                                    <button class="edit-button"
+                                            @onclick="() => EditProduct(product)">
+                                        Edit
+                                    </button>
+                                    <button class="delete-button"
+                                            @onclick="() => ConfirmDelete(product.Id)">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (products.Count == 0)
+        {
+            <p class="inventory-empty">No products found. Add your first product to get started.</p>
+        }
+    </section>
+</div>
+
+@code {
+    private List<InventoryProduct> products = new()
+    {
+        new() { Id = 1, Name = "Hand Blender", Category = "Appliances", Price = 49.99m, Quantity = 12 },
+        new() { Id = 2, Name = "Countertop Blender", Category = "Appliances", Price = 129.99m, Quantity = 3 },
+        new() { Id = 3, Name = "Copper Stock Pot", Category = "Cookware", Price = 89.99m, Quantity = 8 },
+        new() { Id = 4, Name = "Instant Pot", Category = "Appliances", Price = 119.99m, Quantity = 6 }
+    };
+
+    private bool showForm;
+    private int? editingId;
+    private string formName = "";
+    private string formCategory = "Appliances";
+    private decimal formPrice;
+    private int formQuantity;
+    private string errorMessage = "";
+
+    private void ShowAddForm()
+    {
+        editingId = null;
+        formName = "";
+        formCategory = "Appliances";
+        formPrice = 0;
+        formQuantity = 0;
+        errorMessage = "";
+        showForm = true;
+    }
+
+    private void EditProduct(InventoryProduct product)
+    {
+        editingId = product.Id;
+        formName = product.Name;
+        formCategory = product.Category;
+        formPrice = product.Price;
+        formQuantity = product.Quantity;
+        errorMessage = "";
+        showForm = true;
+    }
+
+    private void SaveProduct()
+    {
+        if (string.IsNullOrWhiteSpace(formName))
+        {
+            errorMessage = "Please enter a product name.";
+            return;
+        }
+
+        if (formPrice < 0 || formQuantity < 0)
+        {
+            errorMessage = "Price and quantity cannot be negative.";
+            return;
+        }
+
+        if (editingId == null)
+        {
+            int nextId = products.Count == 0
+                ? 1
+                : products.Max(p => p.Id) + 1;
+
+            products.Add(new InventoryProduct
+            {
+                Id = nextId,
+                Name = formName.Trim(),
+                Category = formCategory,
+                Price = formPrice,
+                Quantity = formQuantity
+            });
+        }
+        else
+        {
+            var product = products.FirstOrDefault(p => p.Id == editingId.Value);
+
+            if (product != null)
+            {
+                product.Name = formName.Trim();
+                product.Category = formCategory;
+                product.Price = formPrice;
+                product.Quantity = formQuantity;
+            }
+        }
+
+        CancelForm();
+    }
+
+    private void DeleteProduct(int id)
+    {
+        var product = products.FirstOrDefault(p => p.Id == id);
+
+        if (product != null)
+        {
+            products.Remove(product);
+        }
+
+        if (editingId == id)
+        {
+            CancelForm();
+        }
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        editingId = null;
+        errorMessage = "";
+    }
+
+    private class InventoryProduct
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Category { get; set; } = "";
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    private int? productToDeleteId;
+
+private void ConfirmDelete(int id)
+{
+    productToDeleteId = id;
+}
+
+private void DeleteConfirmed()
+{
+    if (productToDeleteId.HasValue)
+    {
+        DeleteProduct(productToDeleteId.Value);
+    }
+
+    productToDeleteId = null;
+}
+
+private void CancelDelete()
+{
+    productToDeleteId = null;
+}
+}
+
+<style>
+    .inventory-manager {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 45px 5%;
+        color: #172a46;
+    }
+
+    .inventory-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .inventory-eyebrow {
+        color: #f44336;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 1.5px;
+    }
+
+    .inventory-header h1 {
+        font-family: Georgia, serif;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        margin: 8px 0;
+    }
+
+    .inventory-header p {
+        color: #64748b;
+    }
+
+    .inventory-add-button,
+    .inventory-save-button {
+        background: #172a46;
+        color: white;
+        border: none;
+        border-radius: 9px;
+        padding: 13px 20px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .inventory-add-button:hover,
+    .inventory-save-button:hover {
+        background: #f44336;
+    }
+
+    .inventory-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .inventory-summary-card {
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 6px 18px rgba(23, 42, 70, 0.07);
+    }
+
+    .inventory-summary-card span {
+        display: block;
+        color: #64748b;
+        margin-bottom: 10px;
+    }
+
+    .inventory-summary-card strong {
+        font-size: 2rem;
+        color: #172a46;
+    }
+
+    .inventory-form-card,
+    .inventory-table-card {
+        background: white;
+        padding: 28px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(23, 42, 70, 0.08);
+    }
+
+    .inventory-form-card h2,
+    .inventory-table-heading h2 {
+        font-family: Georgia, serif;
+        margin: 0 0 20px;
+    }
+
+    .inventory-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .inventory-form-grid label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .inventory-form-grid input,
+    .inventory-form-grid select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .inventory-form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .inventory-cancel-button {
+        background: #e5e7eb;
+        color: #172a46;
+        border: none;
+        border-radius: 9px;
+        padding: 13px 20px;
+        cursor: pointer;
+    }
+
+    .inventory-error {
+        color: #b91c1c;
+        margin-top: 15px;
+    }
+
+    .inventory-table-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .inventory-table-scroll {
+        overflow-x: auto;
+    }
+
+    .inventory-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 650px;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        text-align: left;
+        padding: 16px 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .inventory-table th {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .inventory-row-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .edit-button,
+    .delete-button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+    }
+
+    .edit-button {
+        background: #fff0cc;
+        color: #775016;
+    }
+
+    .delete-button {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .stock-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .in-stock {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .low-stock {
+        background: #fff0cc;
+        color: #92400e;
+    }
+
+    .out-of-stock {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .inventory-empty {
+        padding: 25px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    @@media (max-width: 700px) {
+        .inventory-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .inventory-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .inventory-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
