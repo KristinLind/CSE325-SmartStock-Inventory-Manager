@@ -44,6 +44,22 @@
                 </div>
 
                 <div>
+                    <label for="product-sku">SKU</label>
+                    <input id="product-sku" @bind="formSku" placeholder="e.g. APP-013" />
+                </div>
+
+                <div>
+                    <label for="product-image">Product Image</label>
+                    <select id="product-image" @bind="formImage">
+                        <option value="">No image</option>
+                        @foreach (var image in imageOptions)
+                        {
+                            <option value="@image.Path">@image.Label</option>
+                        }
+                    </select>
+                </div>
+
+                <div>
                     <label for="product-category">Category</label>
                     <select id="product-category" @bind="formCategory">
                         <option value="Appliances">Appliances</option>
@@ -110,9 +126,25 @@
     </div>
 }
     <section class="inventory-table-card">
+        <div class="inventory-filters">
+            <div>
+                <label for="inventory-search">Search products or SKU</label>
+                <input id="inventory-search" placeholder="Search inventory..." @bind="searchText" @bind:event="oninput" />
+            </div>
+            <div>
+                <label for="inventory-category">Filter by category</label>
+                <select id="inventory-category" @bind="selectedCategory">
+                    <option value="All">All Categories</option>
+                    <option value="Appliances">Appliances</option>
+                    <option value="Cookware">Cookware</option>
+                    <option value="Utensils">Utensils</option>
+                    <option value="Kitchen Accessories">Kitchen Accessories</option>
+                </select>
+            </div>
+        </div>
         <div class="inventory-table-heading">
             <h2>Product Inventory</h2>
-            <span>@products.Count products</span>
+            <span>@FilteredProducts.Count of @products.Count products</span>
         </div>
 
         <div class="inventory-table-scroll">
@@ -120,6 +152,7 @@
                 <thead>
                     <tr>
                         <th>Product</th>
+                        <th>SKU</th>
                         <th>Category</th>
                         <th>Price</th>
                         <th>Quantity</th>
@@ -129,10 +162,19 @@
                 </thead>
 
                 <tbody>
-                    @foreach (var product in products)
+                    @foreach (var product in FilteredProducts)
                     {
                         <tr>
-                            <td><strong>@product.Name</strong></td>
+                            <td>
+                                <div class="inventory-product-cell">
+                                    @if (!string.IsNullOrWhiteSpace(product.Image))
+                                    {
+                                        <img src="@product.Image" alt="@product.Name" class="inventory-product-image" />
+                                    }
+                                    <strong>@product.Name</strong>
+                                </div>
+                            </td>
+                            <td>@product.Sku</td>
                             <td>@product.Category</td>
                             <td>@product.Price.ToString("C")</td>
                             <td>@product.Quantity</td>
@@ -168,25 +210,64 @@
             </table>
         </div>
 
-        @if (products.Count == 0)
+        @if (FilteredProducts.Count == 0)
         {
-            <p class="inventory-empty">No products found. Add your first product to get started.</p>
+            <p class="inventory-empty">No matching products. Try a different search or category, or add a new product.</p>
         }
     </section>
 </div>
 
 @code {
+    // Demonstration inventory: replace with the team database service later.
     private List<InventoryProduct> products = new()
     {
-        new() { Id = 1, Name = "Hand Blender", Category = "Appliances", Price = 49.99m, Quantity = 12 },
-        new() { Id = 2, Name = "Countertop Blender", Category = "Appliances", Price = 129.99m, Quantity = 3 },
-        new() { Id = 3, Name = "Copper Stock Pot", Category = "Cookware", Price = 89.99m, Quantity = 8 },
-        new() { Id = 4, Name = "Instant Pot", Category = "Appliances", Price = 119.99m, Quantity = 6 }
+        new() { Id = 1, Sku = "APP-001", Name = "Hand Blender", Category = "Appliances", Price = 49.99m, Quantity = 12, Image = "/images/hand-blenders.webp" },
+        new() { Id = 2, Sku = "APP-002", Name = "Countertop Blender", Category = "Appliances", Price = 129.99m, Quantity = 3, Image = "/images/blender.webp" },
+        new() { Id = 3, Sku = "COO-001", Name = "Copper Stock Pot", Category = "Cookware", Price = 89.99m, Quantity = 8, Image = "/images/copper-pot.webp" },
+        new() { Id = 4, Sku = "APP-003", Name = "Instant Pot", Category = "Appliances", Price = 119.99m, Quantity = 6, Image = "/images/instant-pot.webp" },
+        new() { Id = 5, Sku = "APP-004", Name = "Stand Mixer", Category = "Appliances", Price = 299.99m, Quantity = 4, Image = "/images/stand-mixer.webp" },
+        new() { Id = 6, Sku = "COO-002", Name = "Cast Iron Pan", Category = "Cookware", Price = 54.99m, Quantity = 10, Image = "/images/cast-iron-pan.webp" },
+        new() { Id = 7, Sku = "APP-005", Name = "Rice Cooker", Category = "Appliances", Price = 79.99m, Quantity = 5, Image = "/images/rice-cooker.webp" },
+        new() { Id = 8, Sku = "UTE-001", Name = "Pastry Cutter", Category = "Utensils", Price = 14.99m, Quantity = 18, Image = "/images/pastry-cutter.webp" },
+        new() { Id = 9, Sku = "UTE-002", Name = "Vegetable Peelers", Category = "Utensils", Price = 12.99m, Quantity = 2, Image = "/images/vegetable-peelers.webp" },
+        new() { Id = 10, Sku = "UTE-003", Name = "Wooden Spoon", Category = "Utensils", Price = 8.99m, Quantity = 25, Image = "/images/wooden-spoon.webp" },
+        new() { Id = 11, Sku = "UTE-004", Name = "Whisks", Category = "Utensils", Price = 11.99m, Quantity = 15, Image = "/images/whisks.webp" },
+        new() { Id = 12, Sku = "ACC-001", Name = "Silverware Set", Category = "Kitchen Accessories", Price = 39.99m, Quantity = 0, Image = "/images/silverware.webp" }
     };
+
+    private readonly (string Path, string Label)[] imageOptions = new[]
+    {
+        ("/images/hand-blenders.webp", "Hand Blender"),
+        ("/images/blender.webp", "Countertop Blender"),
+        ("/images/copper-pot.webp", "Copper Stock Pot"),
+        ("/images/instant-pot.webp", "Instant Pot"),
+        ("/images/stand-mixer.webp", "Stand Mixer"),
+        ("/images/cast-iron-pan.webp", "Cast Iron Pan"),
+        ("/images/rice-cooker.webp", "Rice Cooker"),
+        ("/images/pastry-cutter.webp", "Pastry Cutter"),
+        ("/images/vegetable-peelers.webp", "Vegetable Peelers"),
+        ("/images/wooden-spoon.webp", "Wooden Spoon"),
+        ("/images/whisks.webp", "Whisks"),
+        ("/images/silverware.webp", "Silverware Set"),
+        ("/images/submersion-blendor.webp", "Immersion Blender"),
+        ("/images/sponges.webp", "Sponges"),
+        ("/images/utinsel-holder.webp", "Utensil Holder")
+    };
+
+    private string searchText = "";
+    private string selectedCategory = "All";
+    private List<InventoryProduct> FilteredProducts => products
+        .Where(p => (selectedCategory == "All" || p.Category == selectedCategory)
+            && (string.IsNullOrWhiteSpace(searchText)
+                || p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || p.Sku.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
 
     private bool showForm;
     private int? editingId;
     private string formName = "";
+    private string formSku = "";
+    private string formImage = "";
     private string formCategory = "Appliances";
     private decimal formPrice;
     private int formQuantity;
@@ -196,6 +277,8 @@
     {
         editingId = null;
         formName = "";
+        formSku = "";
+        formImage = "";
         formCategory = "Appliances";
         formPrice = 0;
         formQuantity = 0;
@@ -207,6 +290,8 @@
     {
         editingId = product.Id;
         formName = product.Name;
+        formSku = product.Sku;
+        formImage = product.Image;
         formCategory = product.Category;
         formPrice = product.Price;
         formQuantity = product.Quantity;
@@ -219,6 +304,19 @@
         if (string.IsNullOrWhiteSpace(formName))
         {
             errorMessage = "Please enter a product name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(formSku))
+        {
+            errorMessage = "Please enter a SKU.";
+            return;
+        }
+
+        if (products.Any(p => p.Sku.Equals(formSku.Trim(), StringComparison.OrdinalIgnoreCase)
+            && p.Id != editingId))
+        {
+            errorMessage = "This SKU is already assigned to another product.";
             return;
         }
 
@@ -238,6 +336,8 @@
             {
                 Id = nextId,
                 Name = formName.Trim(),
+                Sku = formSku.Trim(),
+                Image = formImage,
                 Category = formCategory,
                 Price = formPrice,
                 Quantity = formQuantity
@@ -250,6 +350,8 @@
             if (product != null)
             {
                 product.Name = formName.Trim();
+                product.Sku = formSku.Trim();
+                product.Image = formImage;
                 product.Category = formCategory;
                 product.Price = formPrice;
                 product.Quantity = formQuantity;
@@ -285,6 +387,8 @@
     {
         public int Id { get; set; }
         public string Name { get; set; } = "";
+        public string Sku { get; set; } = "";
+        public string Image { get; set; } = "";
         public string Category { get; set; } = "";
         public decimal Price { get; set; }
         public int Quantity { get; set; }
@@ -451,6 +555,44 @@ private void CancelDelete()
         gap: 15px;
     }
 
+    .inventory-filters {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .inventory-filters label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .inventory-filters input,
+    .inventory-filters select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .inventory-product-cell {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 185px;
+    }
+
+    .inventory-product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 9px;
+        background: #f7f5ef;
+        flex-shrink: 0;
+    }
+
     .inventory-table-scroll {
         overflow-x: auto;
     }
@@ -536,7 +678,8 @@ private void CancelDelete()
             grid-template-columns: 1fr;
         }
 
-        .inventory-form-grid {
+        .inventory-form-grid,
+        .inventory-filters {
             grid-template-columns: 1fr;
         }
     }
