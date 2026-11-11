@@ -1,0 +1,210 @@
+
+@page "/login"
+
+<PageTitle>SmartStock | Sign In</PageTitle>
+
+<div class="smartstock-login-page">
+    <div class="login-card">
+
+        <div class="login-brand">
+            <span class="login-eyebrow">WELCOME BACK</span>
+            <h1>SmartStock</h1>
+            <p>Smart Inventory. Better Business.</p>
+        </div>
+
+        <div class="login-heading">
+            <h2>Sign In</h2>
+            <p>Access your kitchen inventory dashboard.</p>
+        </div>
+
+        <form @onsubmit="HandleLogin"
+              @onsubmit:preventDefault="true">
+
+            <div class="login-field">
+                <label for="email">Email Address</label>
+                <input id="email"
+                       type="email"
+                       placeholder="Enter your email"
+                       autocomplete="username"
+                       required
+                       @bind="email" />
+            </div>
+
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input id="password"
+                       type="password"
+                       placeholder="Enter your password"
+                       autocomplete="current-password"
+                       required
+                       @bind="password" />
+            </div>
+
+            <button type="submit" class="login-button">
+                Sign In
+            </button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <p class="login-message" role="status">
+                    @message
+                </p>
+            }
+        </form>
+
+        <div class="login-footer">
+            <p>New to SmartStock? Account registration coming soon.</p>
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string message = "";
+
+    private void HandleLogin()
+    {
+        message = "Login design preview. Authentication will be connected when the backend is ready.";
+    }
+}
+
+<style>
+    .smartstock-login-page {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        background: #f7f5ef;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 460px;
+        padding: 45px;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e4e7eb;
+        box-shadow: 0 15px 45px rgba(32, 53, 75, 0.12);
+    }
+
+    .login-brand {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .login-eyebrow {
+        color: #c75b45;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .login-brand h1 {
+        font-family: Georgia, serif;
+        color: #20354b;
+        font-size: 2.7rem;
+        margin: 12px 0 8px;
+    }
+
+    .login-brand p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .login-heading {
+        margin-bottom: 25px;
+    }
+
+    .login-heading h2 {
+        color: #20354b;
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+    }
+
+    .login-heading p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .login-field {
+        margin-bottom: 22px;
+    }
+
+    .login-field label {
+        display: block;
+        font-weight: 600;
+        color: #20354b;
+        margin-bottom: 8px;
+    }
+
+    .login-field input {
+        width: 100%;
+        padding: 13px 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+
+    .login-field input:focus {
+        outline: 2px solid #c75b45;
+        border-color: #c75b45;
+    }
+
+    .login-button {
+        width: 100%;
+        padding: 14px;
+        background: #20354b;
+        color: white;
+        border: none;
+        border-radius: 9px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .login-button:hover {
+        background: #c75b45;
+    }
+
+    .login-message {
+        margin-top: 18px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #fff4df;
+        color: #775016;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 28px;
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.7;
+    }
+
+    .login-footer a {
+        display: inline-block;
+        margin-top: 12px;
+        color: #c75b45;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .login-footer a:hover {
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 600px) {
+        .login-card {
+            padding: 30px 22px;
+        }
+    }
+</style>
