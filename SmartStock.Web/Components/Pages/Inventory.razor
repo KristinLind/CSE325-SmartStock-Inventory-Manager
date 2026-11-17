@@ -704,8 +704,16 @@ private void CancelDelete()
     }
 
     .inventory-row-actions {
-        display: flex;
-        gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 180px;
+    }
+
+    .inventory-row-actions button {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 8px 10px;
     }
 
     .edit-button,
