@@ -31,6 +31,54 @@
             <strong>@products.Sum(p => p.Price * p.Quantity).ToString("C")</strong>
         </div>
     </div>
+    @if (selectedProduct != null)
+    {
+        <section class="inventory-form-card">
+            <h2>Product Details</h2>
+
+            <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+
+                @if (!string.IsNullOrWhiteSpace(selectedProduct.Image))
+                {
+                    <img src="@selectedProduct.Image"
+                        alt="@selectedProduct.Name"
+                        style="width: 220px; height: 220px; object-fit: contain; border-radius: 12px;" />
+                }
+
+                <div>
+                    <h3>@selectedProduct.Name</h3>
+
+                    <p><strong>SKU:</strong> @selectedProduct.Sku</p>
+                    <p><strong>Category:</strong> @selectedProduct.Category</p>
+                    <p><strong>Unit Price:</strong> @selectedProduct.Price.ToString("C")</p>
+                    <p><strong>Quantity Available:</strong> @selectedProduct.Quantity</p>
+
+                    <p>
+                        <strong>Stock Status:</strong>
+                        @if (selectedProduct.Quantity == 0)
+                        {
+                            <span class="stock-badge out-of-stock">Out of Stock</span>
+                        }
+                        else if (selectedProduct.Quantity < 5)
+                        {
+                            <span class="stock-badge low-stock">Low Stock</span>
+                        }
+                        else
+                        {
+                            <span class="stock-badge in-stock">In Stock</span>
+                        }
+                    </p>
+                </div>
+            </div>
+
+        <div class="inventory-form-actions">
+            <button class="inventory-cancel-button"
+                    @onclick="CloseProductDetails">
+                Close Details
+            </button>
+        </div>
+    </section>
+}
 
     @if (showForm)
     {
@@ -195,9 +243,15 @@
                             <td>
                                 <div class="inventory-row-actions">
                                     <button class="edit-button"
+                                            @onclick="() => ViewProduct(product)">
+                                        View Details
+                                    </button>
+
+                                    <button class="edit-button"
                                             @onclick="() => EditProduct(product)">
                                         Edit
                                     </button>
+
                                     <button class="delete-button"
                                             @onclick="() => ConfirmDelete(product.Id)">
                                         Delete
@@ -284,6 +338,18 @@
         formQuantity = 0;
         errorMessage = "";
         showForm = true;
+    }
+
+    private InventoryProduct? selectedProduct;
+
+    private void ViewProduct(InventoryProduct product)
+    {
+        selectedProduct = product;
+    }
+
+    private void CloseProductDetails()
+    {
+        selectedProduct = null;
     }
 
     private void EditProduct(InventoryProduct product)
