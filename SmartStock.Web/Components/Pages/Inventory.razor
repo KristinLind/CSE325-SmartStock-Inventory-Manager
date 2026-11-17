@@ -114,6 +114,7 @@
                         <option value="Cookware">Cookware</option>
                         <option value="Utensils">Utensils</option>
                         <option value="Kitchen Accessories">Kitchen Accessories</option>
+                        <option value="Food Storage">Food Storage</option>
                     </select>
                 </div>
 
@@ -287,7 +288,10 @@
         new() { Id = 9, Sku = "UTE-002", Name = "Vegetable Peelers", Category = "Utensils", Price = 12.99m, Quantity = 2, Image = "/images/vegetable-peelers.webp" },
         new() { Id = 10, Sku = "UTE-003", Name = "Wooden Spoon", Category = "Utensils", Price = 8.99m, Quantity = 25, Image = "/images/wooden-spoon.webp" },
         new() { Id = 11, Sku = "UTE-004", Name = "Whisks", Category = "Utensils", Price = 11.99m, Quantity = 15, Image = "/images/whisks.webp" },
-        new() { Id = 12, Sku = "ACC-001", Name = "Silverware Set", Category = "Kitchen Accessories", Price = 39.99m, Quantity = 0, Image = "/images/silverware.webp" }
+        new() { Id = 12, Sku = "ACC-001", Name = "Silverware Set", Category = "Kitchen Accessories", Price = 39.99m, Quantity = 0, Image = "/images/silverware.webp" },
+        new() { Id = 13, Sku = "STO-001", Name = "Glass Food Storage Containers", Category = "Food Storage", Price = 29.99m, Quantity = 25, Image = "/images/glass-storage.webp" },
+        new() { Id = 14, Sku = "STO-002", Name = "Kitchen Storage Jars", Category = "Food Storage", Price = 24.99m, Quantity = 30, Image = "/images/storage-jars.webp" },
+        new() { Id = 15, Sku = "STO-003", Name = "White Storage Containers", Category = "Food Storage", Price = 19.99m, Quantity = 20, Image = "/images/white-containers.webp" }
     };
 
     private readonly (string Path, string Label)[] imageOptions = new[]
@@ -306,7 +310,10 @@
         ("/images/silverware.webp", "Silverware Set"),
         ("/images/submersion-blendor.webp", "Immersion Blender"),
         ("/images/sponges.webp", "Sponges"),
-        ("/images/utinsel-holder.webp", "Utensil Holder")
+        ("/images/utinsel-holder.webp", "Utensil Holder"),
+        ("/images/glass-storage.webp", "Glass Food Storage Containers"),
+        ("/images/storage-jars.webp", "Kitchen Storage Jars"),
+        ("/images/white-containers.webp", "White Storage Containers")
     };
 
     [SupplyParameterFromQuery(Name = "category")]
