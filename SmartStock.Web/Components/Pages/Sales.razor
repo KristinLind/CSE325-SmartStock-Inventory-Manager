@@ -1,0 +1,119 @@
+@page "/sales"
+@using System.ComponentModel.DataAnnotations
+@inject ProductService Products
+@inject SaleService SalesSvc
+
+<PageTitle>Record Sale</PageTitle>
+
+<h1>Record a Sale</h1>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-success">@message</div>
+}
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<EditForm Model="form" OnValidSubmit="RecordAsync" class="row g-2 mb-2">
+    <DataAnnotationsValidator />
+    <div class="col-md-6">
+        <label class="form-label">Product</label>
+        <InputSelect class="form-select" @bind-Value="form.ProductId">
+            <option value="0">-- Select product --</option>
+            @foreach (var p in sellable)
+            {
+                <option value="@p.Id">@p.Name (@p.Sku), @p.Quantity in stock</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Quantity</label>
+        <InputNumber class="form-control" @bind-Value="form.Quantity" />
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Record sale</button>
+    </div>
+    <div class="col-12"><ValidationSummary /></div>
+</EditForm>
+
+@if (selected is not null)
+{
+    <p class="text-muted">
+        Price: @selected.Price.ToString("C") ·
+        In stock: @selected.Quantity ·
+        Sale total: <strong>@((selected.Price * form.Quantity).ToString("C"))</strong>
+    </p>
+}
+
+<h4 class="mt-4">Recent sales</h4>
+@if (recent.Count == 0)
+{
+    <p><em>No sales recorded yet.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>When</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var s in recent)
+            {
+                <tr>
+                    <td>@s.SoldAt.ToString("dd MMM yyyy HH:mm")</td>
+                    <td>@s.Product?.Name</td>
+                    <td>@s.QuantitySold</td>
+                    <td>@s.UnitPrice.ToString("C")</td>
+                    <td>@s.Total.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    public class SaleForm
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Choose a product")]
+        public int ProductId { get; set; }
+
+        [Range(1, 100000, ErrorMessage = "Quantity must be at least 1")]
+        public int Quantity { get; set; } = 1;
+    }
+
+    private SaleForm form = new();
+    private List<Product> sellable = new();
+    private List<Sale> recent = new();
+    private string? message;
+    private string? error;
+
+    private Product? selected => sellable.FirstOrDefault(p => p.Id == form.ProductId);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var all = await Products.GetAllAsync();
+        sellable = all.Where(p => p.Quantity > 0).ToList();
+        recent = await SalesSvc.GetRecentAsync(10);
+    }
+
+    private async Task RecordAsync()
+    {
+        message = null;
+        error = null;
+        try
+        {
+            var sale = await SalesSvc.RecordSaleAsync(form.ProductId, form.Quantity);
+            message = $"Recorded: {sale.QuantitySold} × {sale.Product!.Name} = {sale.Total:C}";
+            form = new SaleForm();
+            await LoadAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

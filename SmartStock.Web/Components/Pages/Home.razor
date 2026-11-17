@@ -122,3 +122,95 @@
 
 </div>
 
+@*@page "/"
+@inject ProductService Products
+@inject SaleService SalesSvc
+
+<PageTitle>SmartStock Dashboard</PageTitle>
+
+<h1>SmartStock Dashboard</h1>
+
+@if (summary is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+            <div class="card text-center"><div class="card-body">
+                <h6 class="text-muted">Products</h6><h3>@summary.TotalProducts</h3>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center"><div class="card-body">
+                <h6 class="text-muted">Units in stock</h6><h3>@summary.TotalUnits</h3>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center"><div class="card-body">
+                <h6 class="text-muted">Inventory value</h6><h3>@summary.InventoryValue.ToString("C")</h3>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center border-warning"><div class="card-body">
+                <h6 class="text-muted">Low stock</h6><h3>@summary.LowStockCount</h3>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center border-danger"><div class="card-body">
+                <h6 class="text-muted">Out of stock</h6><h3>@summary.OutOfStockCount</h3>
+            </div></div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center"><div class="card-body">
+                <h6 class="text-muted">Sales today</h6>
+                <h3>@salesToday</h3>
+                <small class="text-muted">@revenueToday.ToString("C") revenue</small>
+            </div></div>
+        </div>
+    </div>
+
+    <h4>Needs restocking</h4>
+    @if (lowStock.Count == 0)
+    {
+        <p><em>Nothing is running low. 🎉</em></p>
+    }
+    else
+    {
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr><th>Product</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Reorder level</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in lowStock)
+                {
+                    <tr>
+                        <td>@p.Name</td>
+                        <td>@p.Sku</td>
+                        <td>@p.Category?.Name</td>
+                        <td>@p.Quantity</td>
+                        <td>@p.ReorderLevel</td>
+                        <td><StockBadge Product="p" /></td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="products/edit/@p.Id">Restock</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private InventorySummary? summary;
+    private List<Product> lowStock = new();
+    private int salesToday;
+    private decimal revenueToday;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await Products.GetSummaryAsync();
+        lowStock = await Products.GetLowStockAsync();
+        (salesToday, revenueToday) = await SalesSvc.GetTodaySummaryAsync();
+    }
+}@**@
+

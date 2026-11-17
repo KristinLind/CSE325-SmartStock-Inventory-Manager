@@ -1,0 +1,90 @@
+@page "/categories"
+@inject CategoryService Categories
+
+<PageTitle>Categories</PageTitle>
+
+<h1>Categories</h1>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<EditForm Model="newCategory" OnValidSubmit="AddAsync" class="row g-2 mb-4">
+    <DataAnnotationsValidator />
+    <div class="col-md-4">
+        <InputText class="form-control" placeholder="New category name" @bind-Value="newCategory.Name" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Add category</button>
+    </div>
+    <div class="col-12"><ValidationSummary /></div>
+</EditForm>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr><th>Name</th><th>Products</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var c in categories)
+        {
+            <tr>
+                <td>@c.Name</td>
+                <td>@c.Products.Count</td>
+                <td class="text-end">
+                    @if (confirmId == c.Id)
+                    {
+                        <span>Delete?</span>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(c.Id)">Yes</button>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => confirmId = null">No</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmId = c.Id">Delete</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Category> categories = new();
+    private Category newCategory = new();
+    private int? confirmId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => categories = await Categories.GetAllAsync();
+
+    private async Task AddAsync()
+    {
+        error = null;
+        try
+        {
+            await Categories.AddAsync(newCategory);
+            newCategory = new Category();
+            await LoadAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        error = null;
+        try
+        {
+            await Categories.DeleteAsync(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+        confirmId = null;
+        await LoadAsync();
+    }
+}

@@ -1,12 +1,29 @@
+using Microsoft.EntityFrameworkCore;
+using SmartStock.Data;
+using SmartStock.Services;
 using SmartStock.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContextFactory<SmartStockDbContext>(options =>
+    options.UseSqlite("Data Source=smartstock.db"));
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<SaleService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+
+// Create the database file (and the starting categories) on first run
+using (var scope = app.Services.CreateScope())
+{
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<SmartStockDbContext>>();
+    using var db = factory.CreateDbContext();
+    db.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

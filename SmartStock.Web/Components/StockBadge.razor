@@ -1,0 +1,13 @@
+<span class="badge @css">@Product.StockStatus</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public Product Product { get; set; } = default!;
+
+    private string css => Product.StockStatus switch
+    {
+        "Out of stock" => "bg-danger",
+        "Low stock" => "bg-warning text-dark",
+        _ => "bg-success"
+    };
+}
