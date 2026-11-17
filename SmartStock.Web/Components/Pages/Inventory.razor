@@ -187,6 +187,7 @@
                     <option value="Cookware">Cookware</option>
                     <option value="Utensils">Utensils</option>
                     <option value="Kitchen Accessories">Kitchen Accessories</option>
+                    <option value="Food Storage">Food Storage</option>
                 </select>
             </div>
         </div>
@@ -308,8 +309,29 @@
         ("/images/utinsel-holder.webp", "Utensil Holder")
     };
 
+    [SupplyParameterFromQuery(Name = "category")]
+    public string? CategoryFromUrl { get; set; }
+
     private string searchText = "";
     private string selectedCategory = "All";
+
+    protected override void OnParametersSet()
+    {
+        string[] validCategories =
+        {
+            "Appliances",
+            "Cookware",
+            "Utensils",
+            "Kitchen Accessories",
+            "Food Storage"
+        };
+
+        var category = CategoryFromUrl?.Trim();
+
+        selectedCategory = validCategories.Contains(category)
+            ? category!
+            : "All";
+    }
     private List<InventoryProduct> FilteredProducts => products
         .Where(p => (selectedCategory == "All" || p.Category == selectedCategory)
             && (string.IsNullOrWhiteSpace(searchText)
