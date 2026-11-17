@@ -1,5 +1,5 @@
 @page "/categories"
-@inject CategoryService Categories
+@inject CategoryService CategorySvc
 
 <PageTitle>Categories</PageTitle>
 
@@ -56,14 +56,14 @@
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
-    private async Task LoadAsync() => categories = await Categories.GetAllAsync();
+    private async Task LoadAsync() => categories = await CategorySvc.GetAllAsync();
 
     private async Task AddAsync()
     {
         error = null;
         try
         {
-            await Categories.AddAsync(newCategory);
+            await CategorySvc.AddAsync(newCategory);
             newCategory = new Category();
             await LoadAsync();
         }
@@ -78,7 +78,7 @@
         error = null;
         try
         {
-            await Categories.DeleteAsync(id);
+            await CategorySvc.DeleteAsync(id);
         }
         catch (InvalidOperationException ex)
         {

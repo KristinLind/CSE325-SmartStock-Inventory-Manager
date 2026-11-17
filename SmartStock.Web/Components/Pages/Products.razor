@@ -1,6 +1,6 @@
 @page "/products"
-@inject ProductService Products
-@inject CategoryService Categories
+@inject ProductService ProductSvc
+@inject CategoryService CategorySvc
 
 <PageTitle>Products</PageTitle>
 
@@ -91,19 +91,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await Categories.GetAllAsync();
+        categories = await CategorySvc.GetAllAsync();
         await LoadAsync();
     }
 
     private async Task LoadAsync() =>
-        items = await Products.GetAllAsync(search, categoryFilter, stockFilter);
+        items = await ProductSvc.GetAllAsync(search, categoryFilter, stockFilter);
 
     private async Task DeleteAsync(int id)
     {
         error = null;
         try
         {
-            await Products.DeleteAsync(id);
+            await ProductSvc.DeleteAsync(id);
         }
         catch (InvalidOperationException ex)
         {
