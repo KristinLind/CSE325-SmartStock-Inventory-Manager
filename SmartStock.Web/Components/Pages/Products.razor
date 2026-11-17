@@ -1,0 +1,115 @@
+@page "/products"
+@inject ProductService ProductSvc
+@inject CategoryService CategorySvc
+
+<PageTitle>Products</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Products</h1>
+    <a class="btn btn-primary" href="products/new">+ Add product</a>
+</div>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input class="form-control" placeholder="Search by name or SKU..."
+               @bind="search" @bind:event="oninput" @bind:after="LoadAsync" />
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" @bind="categoryFilter" @bind:after="LoadAsync">
+            <option value="0">All categories</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" @bind="stockFilter" @bind:after="LoadAsync">
+            <option value="all">All stock levels</option>
+            <option value="low">Low stock (incl. out)</option>
+            <option value="out">Out of stock</option>
+        </select>
+    </div>
+</div>
+
+@if (items.Count == 0)
+{
+    <p><em>No products found.</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Name</th><th>SKU</th><th>Category</th><th>Price</th>
+                <th>Quantity</th><th>Reorder at</th><th>Status</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Sku</td>
+                    <td>@item.Category?.Name</td>
+                    <td>@item.Price.ToString("C")</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.ReorderLevel</td>
+                    <td><StockBadge Product="item" /></td>
+                    <td class="text-end">
+                        @if (confirmId == item.Id)
+                        {
+                            <span>Delete?</span>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">Yes</button>
+                            <button class="btn btn-sm btn-secondary" @onclick="() => confirmId = null">No</button>
+                        }
+                        else
+                        {
+                            <a class="btn btn-sm btn-outline-primary" href="products/edit/@item.Id">Edit</a>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmId = item.Id">Delete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Product> items = new();
+    private List<Category> categories = new();
+    private string search = "";
+    private int categoryFilter = 0;
+    private string stockFilter = "all";
+    private int? confirmId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await CategorySvc.GetAllAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() =>
+        items = await ProductSvc.GetAllAsync(search, categoryFilter, stockFilter);
+
+    private async Task DeleteAsync(int id)
+    {
+        error = null;
+        try
+        {
+            await ProductSvc.DeleteAsync(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+        confirmId = null;
+        await LoadAsync();
+    }
+}

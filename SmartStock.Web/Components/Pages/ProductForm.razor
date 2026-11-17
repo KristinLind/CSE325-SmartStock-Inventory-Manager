@@ -1,0 +1,102 @@
+@page "/products/new"
+@page "/products/edit/{Id:int}"
+@inject ProductService Products
+@inject CategoryService Categories
+@inject NavigationManager Nav
+
+<PageTitle>@(IsNew ? "Add product" : "Edit product")</PageTitle>
+
+<h1>@(IsNew ? "Add product" : "Edit product")</h1>
+
+@if (notFound)
+{
+    <div class="alert alert-warning">Product not found. <a href="products">Back to products</a></div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <EditForm Model="product" OnValidSubmit="SaveAsync" style="max-width: 600px;">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Name</label>
+            <InputText class="form-control" @bind-Value="product.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">SKU</label>
+            <InputText class="form-control" @bind-Value="product.Sku" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <InputSelect class="form-select" @bind-Value="product.CategoryId">
+                <option value="0">-- Select category --</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Price</label>
+                <InputNumber class="form-control" @bind-Value="product.Price" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Quantity</label>
+                <InputNumber class="form-control" @bind-Value="product.Quantity" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Reorder level</label>
+                <InputNumber class="form-control" @bind-Value="product.ReorderLevel" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-secondary" href="products">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private Product product = new();
+    private List<Category> categories = new();
+    private string? error;
+    private bool notFound;
+
+    private bool IsNew => Id is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await Categories.GetAllAsync();
+
+        if (Id is not null)
+        {
+            var existing = await Products.GetByIdAsync(Id.Value);
+            if (existing is null) notFound = true;
+            else product = existing;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        error = null;
+        try
+        {
+            await Products.SaveAsync(product);
+            Nav.NavigateTo("products");
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+    }
+}
