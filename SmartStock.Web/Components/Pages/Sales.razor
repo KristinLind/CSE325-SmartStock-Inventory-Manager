@@ -1,77 +1,91 @@
 @page "/sales"
 @using System.ComponentModel.DataAnnotations
+@implements IDisposable
 @inject ProductService Products
 @inject SaleService SalesSvc
+@inject AuthService Auth
 
 <PageTitle>Record Sale</PageTitle>
 
-<h1>Record a Sale</h1>
+<div class="container py-4">
+    <h1>Record a Sale</h1>
 
-@if (!string.IsNullOrEmpty(message))
-{
-    <div class="alert alert-success">@message</div>
-}
-@if (!string.IsNullOrEmpty(error))
-{
-    <div class="alert alert-danger">@error</div>
-}
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-success">@message</div>
+    }
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
 
-<EditForm Model="form" OnValidSubmit="RecordAsync" class="row g-2 mb-2">
-    <DataAnnotationsValidator />
-    <div class="col-md-6">
-        <label class="form-label">Product</label>
-        <InputSelect class="form-select" @bind-Value="form.ProductId">
-            <option value="0">-- Select product --</option>
-            @foreach (var p in sellable)
-            {
-                <option value="@p.Id">@p.Name (@p.Sku), @p.Quantity in stock</option>
-            }
-        </InputSelect>
-    </div>
-    <div class="col-md-2">
-        <label class="form-label">Quantity</label>
-        <InputNumber class="form-control" @bind-Value="form.Quantity" />
-    </div>
-    <div class="col-md-2 d-flex align-items-end">
-        <button type="submit" class="btn btn-primary">Record sale</button>
-    </div>
-    <div class="col-12"><ValidationSummary /></div>
-</EditForm>
+    @if (!Auth.IsAuthenticated)
+    {
+        <div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+            <span><strong>Read-Only View:</strong> You can view recent sales below. Sign in to record a new sale.</span>
+            <a class="btn btn-sm btn-warning fw-bold" href="login?returnUrl=/sales">Sign In</a>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="form" OnValidSubmit="RecordAsync" class="row g-2 mb-2">
+            <DataAnnotationsValidator />
+            <div class="col-md-6">
+                <label class="form-label">Product</label>
+                <InputSelect class="form-select" @bind-Value="form.ProductId">
+                    <option value="0">-- Select product --</option>
+                    @foreach (var p in sellable)
+                    {
+                        <option value="@p.Id">@p.Name (@p.Sku), @p.Quantity in stock</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Quantity</label>
+                <InputNumber class="form-control" @bind-Value="form.Quantity" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Record sale</button>
+            </div>
+            <div class="col-12"><ValidationSummary /></div>
+        </EditForm>
 
-@if (selected is not null)
-{
-    <p class="text-muted">
-        Price: @selected.Price.ToString("C") ·
-        In stock: @selected.Quantity ·
-        Sale total: <strong>@((selected.Price * form.Quantity).ToString("C"))</strong>
-    </p>
-}
+        @if (selected is not null)
+        {
+            <p class="text-muted">
+                Price: @selected.Price.ToString("C") ·
+                In stock: @selected.Quantity ·
+                Sale total: <strong>@((selected.Price * form.Quantity).ToString("C"))</strong>
+            </p>
+        }
+    }
 
-<h4 class="mt-4">Recent sales</h4>
-@if (recent.Count == 0)
-{
-    <p><em>No sales recorded yet.</em></p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr><th>When</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var s in recent)
-            {
-                <tr>
-                    <td>@s.SoldAt.ToString("dd MMM yyyy HH:mm")</td>
-                    <td>@s.Product?.Name</td>
-                    <td>@s.QuantitySold</td>
-                    <td>@s.UnitPrice.ToString("C")</td>
-                    <td>@s.Total.ToString("C")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    <h4 class="mt-4">Recent sales</h4>
+    @if (recent.Count == 0)
+    {
+        <p><em>No sales recorded yet.</em></p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr><th>When</th><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in recent)
+                {
+                    <tr>
+                        <td>@s.SoldAt.ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@s.Product?.Name</td>
+                        <td>@s.QuantitySold</td>
+                        <td>@s.UnitPrice.ToString("C")</td>
+                        <td>@s.Total.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
 
 @code {
     public class SaleForm
@@ -91,7 +105,16 @@ else
 
     private Product? selected => sellable.FirstOrDefault(p => p.Id == form.ProductId);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
+        await LoadAsync();
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
 
     private async Task LoadAsync()
     {
@@ -102,6 +125,12 @@ else
 
     private async Task RecordAsync()
     {
+        if (!Auth.IsAuthenticated)
+        {
+            error = "You must be signed in to record a sale.";
+            return;
+        }
+
         message = null;
         error = null;
         try
@@ -115,5 +144,10 @@ else
         {
             error = ex.Message;
         }
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 }

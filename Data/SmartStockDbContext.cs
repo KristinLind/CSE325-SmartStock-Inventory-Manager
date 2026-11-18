@@ -10,12 +10,14 @@ public class SmartStockDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
-        // SKUs and category names must be unique
+        // SKUs, category names, and user emails must be unique
         b.Entity<Product>().HasIndex(p => p.Sku).IsUnique();
         b.Entity<Category>().HasIndex(c => c.Name).IsUnique();
+        b.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
         // Block deleting a category that has products, or a product that has sales
         b.Entity<Product>()

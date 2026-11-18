@@ -1,68 +1,81 @@
 @page "/products/new"
 @page "/products/edit/{Id:int}"
+@implements IDisposable
 @inject ProductService Products
 @inject CategoryService Categories
+@inject AuthService Auth
 @inject NavigationManager Nav
 
 <PageTitle>@(IsNew ? "Add product" : "Edit product")</PageTitle>
 
-<h1>@(IsNew ? "Add product" : "Edit product")</h1>
+<div class="container py-4">
+    <h1>@(IsNew ? "Add product" : "Edit product")</h1>
 
-@if (notFound)
-{
-    <div class="alert alert-warning">Product not found. <a href="products">Back to products</a></div>
-}
-else
-{
-    @if (!string.IsNullOrEmpty(error))
+    @if (!Auth.IsAuthenticated)
     {
-        <div class="alert alert-danger">@error</div>
+        <div class="alert alert-warning mt-3" style="max-width: 600px;">
+            <h5 class="alert-heading">Sign In Required</h5>
+            <p class="mb-3">You must be signed in to @(IsNew ? "add a new product" : "edit a product").</p>
+            <a class="btn btn-primary me-2" href="login?returnUrl=/products">Sign In</a>
+            <a class="btn btn-secondary" href="products">Back to Products</a>
+        </div>
     }
+    else if (notFound)
+    {
+        <div class="alert alert-warning">Product not found. <a href="products">Back to products</a></div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger">@error</div>
+        }
 
-    <EditForm Model="product" OnValidSubmit="SaveAsync" style="max-width: 600px;">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+        <EditForm Model="product" OnValidSubmit="SaveAsync" style="max-width: 600px;">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <InputText class="form-control" @bind-Value="product.Name" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">SKU</label>
-            <InputText class="form-control" @bind-Value="product.Sku" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Category</label>
-            <InputSelect class="form-select" @bind-Value="product.CategoryId">
-                <option value="0">-- Select category --</option>
-                @foreach (var c in categories)
-                {
-                    <option value="@c.Id">@c.Name</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Price</label>
-                <InputNumber class="form-control" @bind-Value="product.Price" />
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <InputText class="form-control" @bind-Value="product.Name" />
             </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Quantity</label>
-                <InputNumber class="form-control" @bind-Value="product.Quantity" />
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Reorder level</label>
-                <InputNumber class="form-control" @bind-Value="product.ReorderLevel" />
-            </div>
-        </div>
 
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a class="btn btn-secondary" href="products">Cancel</a>
-    </EditForm>
-}
+            <div class="mb-3">
+                <label class="form-label">SKU</label>
+                <InputText class="form-control" @bind-Value="product.Sku" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <InputSelect class="form-select" @bind-Value="product.CategoryId">
+                    <option value="0">-- Select category --</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Price</label>
+                    <InputNumber class="form-control" @bind-Value="product.Price" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Quantity</label>
+                    <InputNumber class="form-control" @bind-Value="product.Quantity" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Reorder level</label>
+                    <InputNumber class="form-control" @bind-Value="product.ReorderLevel" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="products">Cancel</a>
+        </EditForm>
+    }
+</div>
 
 @code {
     [Parameter] public int? Id { get; set; }
@@ -76,6 +89,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
         categories = await Categories.GetAllAsync();
 
         if (Id is not null)
@@ -86,8 +100,19 @@ else
         }
     }
 
+    private void HandleAuthStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     private async Task SaveAsync()
     {
+        if (!Auth.IsAuthenticated)
+        {
+            error = "You must be signed in to save product changes.";
+            return;
+        }
+
         error = null;
         try
         {
@@ -98,5 +123,10 @@ else
         {
             error = ex.Message;
         }
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 }

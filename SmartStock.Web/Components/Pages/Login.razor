@@ -1,7 +1,10 @@
-
 @page "/login"
+@page "/register"
+@implements IDisposable
+@inject AuthService Auth
+@inject NavigationManager Nav
 
-<PageTitle>SmartStock | Sign In</PageTitle>
+<PageTitle>SmartStock | @(isRegisterMode ? "Create Account" : "Sign In")</PageTitle>
 
 <div class="smartstock-login-page">
     <div class="login-card">
@@ -12,48 +15,148 @@
             <p>Smart Inventory. Better Business.</p>
         </div>
 
-        <div class="login-heading">
-            <h2>Sign In</h2>
-            <p>Access your kitchen inventory dashboard.</p>
-        </div>
+        @if (Auth.IsAuthenticated && Auth.CurrentUser is not null)
+        {
+            <div class="login-authenticated-panel">
+                <h2>Signed in as @Auth.CurrentUser.FullName</h2>
+                <p>@Auth.CurrentUser.Email (@Auth.CurrentUser.Role)</p>
 
-        <form @onsubmit="HandleLogin"
-              @onsubmit:preventDefault="true">
-
-            <div class="login-field">
-                <label for="email">Email Address</label>
-                <input id="email"
-                       type="email"
-                       placeholder="Enter your email"
-                       autocomplete="username"
-                       required
-                       @bind="email" />
+                <div class="login-auth-actions">
+                    <a href="/inventory" class="login-button login-link-button">Go to Inventory</a>
+                    <button type="button" class="login-secondary-button" @onclick="HandleLogoutAsync">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="login-mode-tabs" role="tablist">
+                <button type="button"
+                        class="login-tab @(!isRegisterMode ? "active" : "")"
+                        @onclick="() => SwitchMode(false)">
+                    Sign In
+                </button>
+                <button type="button"
+                        class="login-tab @(isRegisterMode ? "active" : "")"
+                        @onclick="() => SwitchMode(true)">
+                    Create Account
+                </button>
             </div>
 
-            <div class="login-field">
-                <label for="password">Password</label>
-                <input id="password"
-                       type="password"
-                       placeholder="Enter your password"
-                       autocomplete="current-password"
-                       required
-                       @bind="password" />
-            </div>
-
-            <button type="submit" class="login-button">
-                Sign In
-            </button>
-
-            @if (!string.IsNullOrEmpty(message))
-            {
-                <p class="login-message" role="status">
-                    @message
+            <div class="login-heading">
+                <h2>@(isRegisterMode ? "Create Account" : "Sign In")</h2>
+                <p>
+                    @(isRegisterMode
+                        ? "Register an account to add, edit, or delete inventory and record sales."
+                        : "Sign in to manage products, categories, and sales.")
                 </p>
+            </div>
+
+            @if (!isRegisterMode)
+            {
+                <div class="demo-credentials-box">
+                    <div>
+                        <strong>Demo Account:</strong>
+                        <span>@AuthService.DemoEmail / @AuthService.DemoPassword</span>
+                    </div>
+                    <button type="button" class="demo-fill-button" @onclick="FillDemoCredentials">
+                        Use Demo
+                    </button>
+                </div>
             }
-        </form>
+
+            <form @onsubmit="HandleSubmitAsync"
+                  @onsubmit:preventDefault="true">
+
+                @if (isRegisterMode)
+                {
+                    <div class="login-field">
+                        <label for="fullName">Full Name</label>
+                        <input id="fullName"
+                               type="text"
+                               placeholder="Enter your full name"
+                               autocomplete="name"
+                               required
+                               @bind="fullName" />
+                    </div>
+                }
+
+                <div class="login-field">
+                    <label for="email">Email Address</label>
+                    <input id="email"
+                           type="email"
+                           placeholder="Enter your email"
+                           autocomplete="username"
+                           required
+                           @bind="email" />
+                </div>
+
+                <div class="login-field">
+                    <label for="password">Password</label>
+                    <input id="password"
+                           type="password"
+                           placeholder="@(isRegisterMode ? "At least 6 characters" : "Enter your password")"
+                           autocomplete="@(isRegisterMode ? "new-password" : "current-password")"
+                           required
+                           @bind="password" />
+                </div>
+
+                @if (isRegisterMode)
+                {
+                    <div class="login-field">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input id="confirmPassword"
+                               type="password"
+                               placeholder="Re-enter your password"
+                               autocomplete="new-password"
+                               required
+                               @bind="confirmPassword" />
+                    </div>
+                }
+
+                <button type="submit" class="login-button">
+                    @(isRegisterMode ? "Create Account" : "Sign In")
+                </button>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="login-message login-error-message" role="alert">
+                        @errorMessage
+                    </p>
+                }
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <p class="login-message" role="status">
+                        @message
+                    </p>
+                }
+            </form>
+        }
 
         <div class="login-footer">
-            <p>New to SmartStock? Account registration coming soon.</p>
+            @if (!Auth.IsAuthenticated)
+            {
+                @if (isRegisterMode)
+                {
+                    <p>
+                        Already have an account?
+                        <button type="button" class="login-inline-toggle" @onclick="() => SwitchMode(false)">
+                            Sign in here
+                        </button>
+                    </p>
+                }
+                else
+                {
+                    <p>
+                        New to SmartStock?
+                        <button type="button" class="login-inline-toggle" @onclick="() => SwitchMode(true)">
+                            Create an account
+                        </button>
+                    </p>
+                }
+            }
             <a href="/">← Back to Dashboard</a>
         </div>
 
@@ -61,13 +164,85 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private bool isRegisterMode;
+    private string fullName = "";
     private string email = "";
     private string password = "";
+    private string confirmPassword = "";
     private string message = "";
+    private string errorMessage = "";
 
-    private void HandleLogin()
+    protected override void OnInitialized()
     {
-        message = "Login design preview. Authentication will be connected when the backend is ready.";
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
+        isRegisterMode = Nav.Uri.Contains("/register", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void SwitchMode(bool register)
+    {
+        isRegisterMode = register;
+        errorMessage = "";
+        message = "";
+    }
+
+    private void FillDemoCredentials()
+    {
+        isRegisterMode = false;
+        email = AuthService.DemoEmail;
+        password = AuthService.DemoPassword;
+        errorMessage = "";
+        message = "Demo credentials filled. Click 'Sign In' to continue.";
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        errorMessage = "";
+        message = "";
+
+        if (isRegisterMode)
+        {
+            var (success, error) = await Auth.RegisterAsync(fullName, email, password, confirmPassword);
+            if (!success)
+            {
+                errorMessage = error ?? "Registration failed.";
+                return;
+            }
+        }
+        else
+        {
+            var (success, error) = await Auth.LoginAsync(email, password);
+            if (!success)
+            {
+                errorMessage = error ?? "Sign in failed.";
+                return;
+            }
+        }
+
+        var target = !string.IsNullOrWhiteSpace(ReturnUrl) && ReturnUrl.StartsWith('/')
+            ? ReturnUrl
+            : "/inventory";
+        Nav.NavigateTo(target);
+    }
+
+    private async Task HandleLogoutAsync()
+    {
+        await Auth.LogoutAsync();
+        email = "";
+        password = "";
+        message = "You have been signed out.";
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 }
 
@@ -83,7 +258,7 @@
 
     .login-card {
         width: 100%;
-        max-width: 460px;
+        max-width: 480px;
         padding: 45px;
         background: white;
         border-radius: 20px;
@@ -93,7 +268,7 @@
 
     .login-brand {
         text-align: center;
-        margin-bottom: 35px;
+        margin-bottom: 28px;
     }
 
     .login-eyebrow {
@@ -115,8 +290,34 @@
         font-size: 0.95rem;
     }
 
+    .login-mode-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        background: #f1f5f9;
+        padding: 5px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+    }
+
+    .login-tab {
+        border: none;
+        background: transparent;
+        color: #475569;
+        font-weight: 700;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .login-tab.active {
+        background: #20354b;
+        color: white;
+    }
+
     .login-heading {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
     .login-heading h2 {
@@ -130,8 +331,43 @@
         font-size: 0.95rem;
     }
 
+    .demo-credentials-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        margin-bottom: 20px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        color: #334155;
+    }
+
+    .demo-credentials-box strong {
+        display: block;
+        color: #20354b;
+    }
+
+    .demo-fill-button {
+        background: #ffc857;
+        color: #172a46;
+        border: none;
+        border-radius: 7px;
+        padding: 7px 12px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .demo-fill-button:hover {
+        background: #f4b738;
+    }
+
     .login-field {
-        margin-bottom: 22px;
+        margin-bottom: 18px;
     }
 
     .login-field label {
@@ -166,10 +402,48 @@
         font-weight: 700;
         cursor: pointer;
         transition: background 0.2s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
     }
 
     .login-button:hover {
         background: #c75b45;
+        color: white;
+    }
+
+    .login-secondary-button {
+        width: 100%;
+        padding: 12px;
+        background: #e2e8f0;
+        color: #20354b;
+        border: none;
+        border-radius: 9px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .login-authenticated-panel {
+        text-align: center;
+        padding: 16px 0;
+    }
+
+    .login-authenticated-panel h2 {
+        color: #20354b;
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+    }
+
+    .login-authenticated-panel p {
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+
+    .login-auth-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .login-message {
@@ -182,12 +456,27 @@
         line-height: 1.5;
     }
 
+    .login-error-message {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
     .login-footer {
         text-align: center;
         margin-top: 28px;
         color: #64748b;
         font-size: 0.9rem;
         line-height: 1.7;
+    }
+
+    .login-inline-toggle {
+        background: none;
+        border: none;
+        color: #c75b45;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0 4px;
+        text-decoration: underline;
     }
 
     .login-footer a {

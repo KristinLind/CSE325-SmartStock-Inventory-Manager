@@ -56,6 +56,35 @@
     color: #ffffff;
 }
 
+.smartstock-user-badge {
+    background: rgba(255, 200, 87, 0.16);
+    color: #ffc857;
+    border: 1px solid rgba(255, 200, 87, 0.45);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.smartstock-logout-button {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.smartstock-logout-button:hover {
+    background: #f44336;
+    border-color: #f44336;
+}
+
 @media (max-width: 600px) {
     .smartstock-navigation {
         flex-direction: column;
