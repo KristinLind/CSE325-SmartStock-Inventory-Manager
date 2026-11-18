@@ -1,4 +1,5 @@
 @page "/products"
+@inject CartService CartSvc
 @implements IDisposable
 @inject ProductService ProductSvc
 @inject CategoryService CategorySvc
@@ -22,85 +23,96 @@
     @if (!Auth.IsAuthenticated)
     {
         <div class="alert alert-warning d-flex justify-content-between align-items-center">
-            <span><strong>Read-Only View:</strong> You can browse and filter products. Sign in to add, edit, or delete products.</span>
-            <a class="btn btn-sm btn-warning fw-bold" href="login?returnUrl=/products">Sign In</a>
-        </div>
-    }
+            <span><strong>Read-Only View:</strong> You can browse and filter products. Sign in to add, edit, or delete
+                products.</span>
+                <a class="btn btn-sm btn-warning fw-bold" href="login?returnUrl=/products">Sign In</a>
+            </div>
+        }
 
-    @if (!string.IsNullOrEmpty(error))
-    {
-        <div class="alert alert-danger">@error</div>
-    }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger">@error</div>
+        }
 
-    <div class="row g-2 mb-3">
-        <div class="col-md-5">
-            <input class="form-control" placeholder="Search by name or SKU..."
-                   @bind="search" @bind:event="oninput" @bind:after="LoadAsync" />
+        <div class="row g-2 mb-3">
+            <div class="col-md-5">
+                <input class="form-control" placeholder="Search by name or SKU..." @bind="search" @bind:event="oninput"
+                       @bind:after="LoadAsync" />
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" @bind="categoryFilter" @bind:after="LoadAsync">
+                    <option value="0">All categories</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="stockFilter" @bind:after="LoadAsync">
+                    <option value="all">All stock levels</option>
+                    <option value="low">Low stock (incl. out)</option>
+                    <option value="out">Out of stock</option>
+                </select>
+            </div>
         </div>
-        <div class="col-md-4">
-            <select class="form-select" @bind="categoryFilter" @bind:after="LoadAsync">
-                <option value="0">All categories</option>
-                @foreach (var c in categories)
-                {
-                    <option value="@c.Id">@c.Name</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select class="form-select" @bind="stockFilter" @bind:after="LoadAsync">
-                <option value="all">All stock levels</option>
-                <option value="low">Low stock (incl. out)</option>
-                <option value="out">Out of stock</option>
-            </select>
-        </div>
-    </div>
 
-    @if (items.Count == 0)
-    {
-        <p><em>No products found.</em></p>
-    }
-    else
-    {
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Name</th><th>SKU</th><th>Category</th><th>Price</th>
-                    <th>Quantity</th><th>Reorder at</th><th>Status</th><th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in items)
-                {
+        @if (items.Count == 0)
+        {
+            <p><em>No products found.</em></p>
+        }
+        else
+        {
+            <table class="table table-striped align-middle">
+                <thead>
                     <tr>
-                        <td>@item.Name</td>
-                        <td>@item.Sku</td>
-                        <td>@item.Category?.Name</td>
-                        <td>@item.Price.ToString("C")</td>
-                        <td>@item.Quantity</td>
-                        <td>@item.ReorderLevel</td>
-                        <td><StockBadge Product="item" /></td>
-                        <td class="text-end">
-                            @if (Auth.IsAuthenticated)
-                            {
-                                @if (confirmId == item.Id)
-                                {
-                                    <span>Delete?</span>
-                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">Yes</button>
-                                    <button class="btn btn-sm btn-secondary" @onclick="() => confirmId = null">No</button>
-                                }
-                                else
-                                {
-                                    <a class="btn btn-sm btn-outline-primary" href="products/edit/@item.Id">Edit</a>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmId = item.Id">Delete</button>
-                                }
-                            }
-                        </td>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Reorder at</th>
+                        <th>Status</th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    }
-</div>
+                </thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@item.Sku</td>
+                            <td>@item.Category?.Name</td>
+                            <td>@item.Price.ToString("C")</td>
+                            <td>@item.Quantity</td>
+                            <td>@item.ReorderLevel</td>
+                            <td>
+                                <StockBadge Product="item" />
+                            </td>
+                            <td class="text-end">
+                                @if (Auth.IsAuthenticated)
+                                {
+                                    @if (confirmId == item.Id)
+                                    {
+                                        <span>Delete?</span>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">Yes</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="() => confirmId = null">No</button>
+                                        <button class="btn btn-sm btn-outline-success" disabled="@(item.Quantity == 0)"
+                                                @onclick="() => AddToCart(item)">Add to cart</button>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" href="products/edit/@item.Id">Edit</a>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmId = item.Id">Delete</button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
 
 @code {
     private List<Product> items = new();
@@ -110,6 +122,14 @@
     private string stockFilter = "all";
     private int? confirmId;
     private string? error;
+
+    private string? cartMessage;
+
+    private void AddToCart(Product product)
+    {
+        error = CartSvc.Add(product); // reuses the page's existing error alert
+        cartMessage = error is null ? $"Added '{product.Name}' to the cart." : null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
