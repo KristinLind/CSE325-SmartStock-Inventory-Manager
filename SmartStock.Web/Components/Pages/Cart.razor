@@ -1,0 +1,107 @@
+@page "/cart"
+@implements IDisposable
+@inject CartService CartSvc
+@inject SaleService SalesSvc
+
+<PageTitle>Cart</PageTitle>
+
+<h1>Cart</h1>
+
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success">@success</div>
+}
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (CartSvc.Items.Count == 0)
+{
+    <p><em>Your cart is empty.</em> <a href="products">Browse products</a></p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Product</th><th>SKU</th><th>Unit price</th>
+                <th style="width:120px">Quantity</th><th>Line total</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in CartSvc.Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Sku</td>
+                    <td>@item.UnitPrice.ToString("C")</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm"
+                               min="1" max="@item.InStock" value="@item.Quantity"
+                               @onchange="e => ChangeQuantity(item.ProductId, e)" />
+                    </td>
+                    <td>@item.LineTotal.ToString("C")</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => CartSvc.Remove(item.ProductId)">Remove</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="text-end">Total</th>
+                <th>@CartSvc.Total.ToString("C")</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <button class="btn btn-primary" disabled="@busy" @onclick="CheckoutAsync">
+        @(busy ? "Processing..." : "Checkout")
+    </button>
+    <button class="btn btn-secondary" disabled="@busy" @onclick="CartSvc.Clear">Clear cart</button>
+}
+
+@code {
+    private string? error;
+    private string? success;
+    private bool busy;
+
+    protected override void OnInitialized() => CartSvc.OnChange += Refresh;
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => CartSvc.OnChange -= Refresh;
+
+    private void ChangeQuantity(int productId, ChangeEventArgs e)
+    {
+        success = null;
+        if (!int.TryParse(e.Value?.ToString(), out var quantity)) return;
+        error = CartSvc.SetQuantity(productId, quantity);
+    }
+
+    private async Task CheckoutAsync()
+    {
+        error = null;
+        success = null;
+        busy = true;
+
+        try
+        {
+            // Use the same sign-in check as your Sales page before this line
+            var (sales, total) = await SalesSvc.CheckoutAsync(CartSvc.Items.ToList());
+            success = $"Sale complete: {sales.Count} product(s), total {total:C}. Stock has been updated.";
+            CartSvc.Clear();
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
