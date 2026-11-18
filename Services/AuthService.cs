@@ -53,6 +53,32 @@ public class AuthService(
                 );
                 CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Users_Email"" ON ""Users"" (""Email"");
             ");
+
+            await db.Database.OpenConnectionAsync();
+            await using (var command = db.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "PRAGMA table_info('Products')";
+                await using var reader = await command.ExecuteReaderAsync();
+                var hasImageUrl = false;
+                while (await reader.ReadAsync())
+                {
+                    if (reader.GetString(1).Equals("ImageUrl", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasImageUrl = true;
+                        break;
+                    }
+                }
+
+                if (!hasImageUrl)
+                {
+                    await reader.DisposeAsync();
+                    await using var alterCommand = db.Database.GetDbConnection().CreateCommand();
+                    alterCommand.CommandText =
+                        "ALTER TABLE \"Products\" ADD COLUMN \"ImageUrl\" TEXT NOT NULL DEFAULT ''";
+                    await alterCommand.ExecuteNonQueryAsync();
+                }
+            }
+            await db.Database.CloseConnectionAsync();
         }
 
         var demoEmailNormalized = DemoEmail.ToLowerInvariant();
