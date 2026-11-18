@@ -132,11 +132,11 @@
 
                 <div>
                     <label for="product-category">Category</label>
-                    <select id="product-category" @bind="formCategory">
-                        <option value="Small Kitchen Appliances">Small Kitchen Appliances</option>
-                        <option value="Cookware and Utensils">Cookware and Utensils</option>
-                        <option value="Food Storage and Organization">Food Storage and Organization</option>
-                        <option value="Home Essentials and Accessories">Home Essentials and Accessories</option>
+                    <select id="product-category" @bind="formCategoryId">
+                        @foreach (var category in dbCategories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
                     </select>
                 </div>
 
@@ -345,6 +345,7 @@
             Name = p.Name,
             Sku = p.Sku,
             Image = p.ImageUrl,
+            CategoryId = p.CategoryId,
             Category = p.Category?.Name ?? "Small Kitchen Appliances",
             Price = p.Price,
             Quantity = p.Quantity
@@ -395,7 +396,7 @@
     private string formName = "";
     private string formSku = "";
     private string formImage = "";
-    private string formCategory = "Small Kitchen Appliances";
+    private int formCategoryId;
     private decimal formPrice;
     private int formQuantity;
     private string errorMessage = "";
@@ -412,7 +413,7 @@
         formName = "";
         formSku = "";
         formImage = "";
-        formCategory = "Small Kitchen Appliances";
+        formCategoryId = dbCategories.FirstOrDefault()?.Id ?? 0;
         formPrice = 0;
         formQuantity = 0;
         errorMessage = "";
@@ -443,7 +444,7 @@
         formName = product.Name;
         formSku = product.Sku;
         formImage = product.Image;
-        formCategory = product.Category;
+        formCategoryId = product.CategoryId;
         formPrice = product.Price;
         formQuantity = product.Quantity;
         errorMessage = "";
@@ -485,9 +486,11 @@
 
         try
         {
-            var category = dbCategories.FirstOrDefault(
-                c => c.Name.Equals(formCategory, StringComparison.OrdinalIgnoreCase))
-                ?? dbCategories.First();
+            if (!dbCategories.Any(c => c.Id == formCategoryId))
+            {
+                errorMessage = "Please select a valid category.";
+                return;
+            }
 
             Product entity;
             if (editingId == null)
@@ -502,7 +505,7 @@
             entity.Name = formName.Trim();
             entity.Sku = formSku.Trim();
             entity.ImageUrl = formImage;
-            entity.CategoryId = category.Id;
+            entity.CategoryId = formCategoryId;
             entity.Price = formPrice;
             entity.Quantity = formQuantity;
 
@@ -551,6 +554,7 @@
         public string Name { get; set; } = "";
         public string Sku { get; set; } = "";
         public string Image { get; set; } = "";
+        public int CategoryId { get; set; }
         public string Category { get; set; } = "";
         public decimal Price { get; set; }
         public int Quantity { get; set; }
