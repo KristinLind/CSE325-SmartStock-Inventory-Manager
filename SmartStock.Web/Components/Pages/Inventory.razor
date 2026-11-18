@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject AuthService Auth
+@inject ProductService ProductSvc
+@inject CategoryService CategorySvc
 @inject NavigationManager Nav
 
 <PageTitle>SmartStock | Inventory Management</PageTitle>
@@ -130,12 +132,11 @@
 
                 <div>
                     <label for="product-category">Category</label>
-                    <select id="product-category" @bind="formCategory">
-                        <option value="Appliances">Appliances</option>
-                        <option value="Cookware">Cookware</option>
-                        <option value="Utensils">Utensils</option>
-                        <option value="Kitchen Accessories">Kitchen Accessories</option>
-                        <option value="Food Storage">Food Storage</option>
+                    <select id="product-category" @bind="formCategoryId">
+                        @foreach (var category in dbCategories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
                     </select>
                 </div>
 
@@ -205,11 +206,10 @@
                 <label for="inventory-category">Filter by category</label>
                 <select id="inventory-category" @bind="selectedCategory">
                     <option value="All">All Categories</option>
-                    <option value="Appliances">Appliances</option>
-                    <option value="Cookware">Cookware</option>
-                    <option value="Utensils">Utensils</option>
-                    <option value="Kitchen Accessories">Kitchen Accessories</option>
-                    <option value="Food Storage">Food Storage</option>
+                    <option value="Small Kitchen Appliances">Small Kitchen Appliances</option>
+                    <option value="Cookware and Utensils">Cookware and Utensils</option>
+                    <option value="Food Storage and Organization">Food Storage and Organization</option>
+                    <option value="Home Essentials and Accessories">Home Essentials and Accessories</option>
                 </select>
             </div>
         </div>
@@ -298,25 +298,8 @@
 </div>
 
 @code {
-    // Demonstration inventory: replace with the team database service later.
-    private List<InventoryProduct> products = new()
-    {
-        new() { Id = 1, Sku = "APP-001", Name = "Hand Blender", Category = "Appliances", Price = 49.99m, Quantity = 12, Image = "/images/hand-blenders.webp" },
-        new() { Id = 2, Sku = "APP-002", Name = "Countertop Blender", Category = "Appliances", Price = 129.99m, Quantity = 3, Image = "/images/blender.webp" },
-        new() { Id = 3, Sku = "COO-001", Name = "Copper Stock Pot", Category = "Cookware", Price = 89.99m, Quantity = 8, Image = "/images/copper-pot.webp" },
-        new() { Id = 4, Sku = "APP-003", Name = "Instant Pot", Category = "Appliances", Price = 119.99m, Quantity = 6, Image = "/images/instant-pot.webp" },
-        new() { Id = 5, Sku = "APP-004", Name = "Stand Mixer", Category = "Appliances", Price = 299.99m, Quantity = 4, Image = "/images/stand-mixer.webp" },
-        new() { Id = 6, Sku = "COO-002", Name = "Cast Iron Pan", Category = "Cookware", Price = 54.99m, Quantity = 10, Image = "/images/cast-iron-pan.webp" },
-        new() { Id = 7, Sku = "APP-005", Name = "Rice Cooker", Category = "Appliances", Price = 79.99m, Quantity = 5, Image = "/images/rice-cooker.webp" },
-        new() { Id = 8, Sku = "UTE-001", Name = "Pastry Cutter", Category = "Utensils", Price = 14.99m, Quantity = 18, Image = "/images/pastry-cutter.webp" },
-        new() { Id = 9, Sku = "UTE-002", Name = "Vegetable Peelers", Category = "Utensils", Price = 12.99m, Quantity = 2, Image = "/images/vegetable-peelers.webp" },
-        new() { Id = 10, Sku = "UTE-003", Name = "Wooden Spoon", Category = "Utensils", Price = 8.99m, Quantity = 25, Image = "/images/wooden-spoon.webp" },
-        new() { Id = 11, Sku = "UTE-004", Name = "Whisks", Category = "Utensils", Price = 11.99m, Quantity = 15, Image = "/images/whisks.webp" },
-        new() { Id = 12, Sku = "ACC-001", Name = "Silverware Set", Category = "Kitchen Accessories", Price = 39.99m, Quantity = 0, Image = "/images/silverware.webp" },
-        new() { Id = 13, Sku = "STO-001", Name = "Glass Food Storage Containers", Category = "Food Storage", Price = 29.99m, Quantity = 25, Image = "/images/glass-storage.webp" },
-        new() { Id = 14, Sku = "STO-002", Name = "Kitchen Storage Jars", Category = "Food Storage", Price = 24.99m, Quantity = 30, Image = "/images/storage-jars.webp" },
-        new() { Id = 15, Sku = "STO-003", Name = "White Storage Containers", Category = "Food Storage", Price = 19.99m, Quantity = 20, Image = "/images/white-containers.webp" }
-    };
+    private List<InventoryProduct> products = new();
+    private List<Category> dbCategories = new();
 
     private readonly (string Path, string Label)[] imageOptions = new[]
     {
@@ -346,9 +329,27 @@
     private string searchText = "";
     private string selectedCategory = "All";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Auth.OnAuthStateChanged += HandleAuthStateChanged;
+        await LoadFromDatabaseAsync();
+    }
+
+    private async Task LoadFromDatabaseAsync()
+    {
+        dbCategories = await CategorySvc.GetAllAsync();
+        var dbProducts = await ProductSvc.GetAllAsync();
+        products = dbProducts.Select(p => new InventoryProduct
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Sku = p.Sku,
+            Image = p.ImageUrl,
+            CategoryId = p.CategoryId,
+            Category = p.Category?.Name ?? "Small Kitchen Appliances",
+            Price = p.Price,
+            Quantity = p.Quantity
+        }).ToList();
     }
 
     private void HandleAuthStateChanged()
@@ -371,11 +372,10 @@
     {
         string[] validCategories =
         {
-            "Appliances",
-            "Cookware",
-            "Utensils",
-            "Kitchen Accessories",
-            "Food Storage"
+            "Small Kitchen Appliances",
+            "Cookware and Utensils",
+            "Food Storage and Organization",
+            "Home Essentials and Accessories"
         };
 
         var category = CategoryFromUrl?.Trim();
@@ -396,7 +396,7 @@
     private string formName = "";
     private string formSku = "";
     private string formImage = "";
-    private string formCategory = "Appliances";
+    private int formCategoryId;
     private decimal formPrice;
     private int formQuantity;
     private string errorMessage = "";
@@ -413,7 +413,7 @@
         formName = "";
         formSku = "";
         formImage = "";
-        formCategory = "Appliances";
+        formCategoryId = dbCategories.FirstOrDefault()?.Id ?? 0;
         formPrice = 0;
         formQuantity = 0;
         errorMessage = "";
@@ -444,14 +444,14 @@
         formName = product.Name;
         formSku = product.Sku;
         formImage = product.Image;
-        formCategory = product.Category;
+        formCategoryId = product.CategoryId;
         formPrice = product.Price;
         formQuantity = product.Quantity;
         errorMessage = "";
         showForm = true;
     }
 
-    private void SaveProduct()
+    private async Task SaveProduct()
     {
         if (!Auth.IsAuthenticated)
         {
@@ -478,54 +478,61 @@
             return;
         }
 
-        if (formPrice < 0 || formQuantity < 0)
+        if (formPrice <= 0 || formQuantity < 0)
         {
-            errorMessage = "Price and quantity cannot be negative.";
+            errorMessage = "Price must be greater than 0 and quantity cannot be negative.";
             return;
         }
 
-        if (editingId == null)
+        try
         {
-            int nextId = products.Count == 0
-                ? 1
-                : products.Max(p => p.Id) + 1;
-
-            products.Add(new InventoryProduct
+            if (!dbCategories.Any(c => c.Id == formCategoryId))
             {
-                Id = nextId,
-                Name = formName.Trim(),
-                Sku = formSku.Trim(),
-                Image = formImage,
-                Category = formCategory,
-                Price = formPrice,
-                Quantity = formQuantity
-            });
-        }
-        else
-        {
-            var product = products.FirstOrDefault(p => p.Id == editingId.Value);
-
-            if (product != null)
-            {
-                product.Name = formName.Trim();
-                product.Sku = formSku.Trim();
-                product.Image = formImage;
-                product.Category = formCategory;
-                product.Price = formPrice;
-                product.Quantity = formQuantity;
+                errorMessage = "Please select a valid category.";
+                return;
             }
-        }
 
-        CancelForm();
+            Product entity;
+            if (editingId == null)
+            {
+                entity = new Product();
+            }
+            else
+            {
+                entity = await ProductSvc.GetByIdAsync(editingId.Value) ?? new Product { Id = editingId.Value };
+            }
+
+            entity.Name = formName.Trim();
+            entity.Sku = formSku.Trim();
+            entity.ImageUrl = formImage;
+            entity.CategoryId = formCategoryId;
+            entity.Price = formPrice;
+            entity.Quantity = formQuantity;
+
+            await ProductSvc.SaveAsync(entity);
+            await LoadFromDatabaseAsync();
+            CancelForm();
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch
+        {
+            errorMessage = "Unable to save the product. Please try again.";
+        }
     }
 
-    private void DeleteProduct(int id)
+    private async Task DeleteProductAsync(int id)
     {
-        var product = products.FirstOrDefault(p => p.Id == id);
-
-        if (product != null)
+        try
         {
-            products.Remove(product);
+            await ProductSvc.DeleteAsync(id);
+            await LoadFromDatabaseAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
         }
 
         if (editingId == id)
@@ -547,6 +554,7 @@
         public string Name { get; set; } = "";
         public string Sku { get; set; } = "";
         public string Image { get; set; } = "";
+        public int CategoryId { get; set; }
         public string Category { get; set; } = "";
         public decimal Price { get; set; }
         public int Quantity { get; set; }
@@ -564,7 +572,7 @@
         productToDeleteId = id;
     }
 
-    private void DeleteConfirmed()
+    private async Task DeleteConfirmed()
     {
         if (!Auth.IsAuthenticated)
         {
@@ -575,7 +583,7 @@
 
         if (productToDeleteId.HasValue)
         {
-            DeleteProduct(productToDeleteId.Value);
+            await DeleteProductAsync(productToDeleteId.Value);
         }
 
         productToDeleteId = null;

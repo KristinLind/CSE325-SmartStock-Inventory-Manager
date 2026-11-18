@@ -49,9 +49,10 @@ This is a collaborative CSE325 student project. Technologies, responsibilities, 
 ## Tech Stack & Dependencies
 
 - **Framework:** [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ASP.NET Core Blazor Web App — Interactive Server Render Mode)
-- **Database:** SQLite (`smartstock.db`, automatically created and seeded on first run)
+- **Database:** Neon Cloud PostgreSQL (via `DATABASE_URL` in `.env`, with automatic local SQLite fallback `smartstock.db`)
 - **NuGet Packages:**
-  - `Microsoft.EntityFrameworkCore.Sqlite` (`10.0.0`) — ORM and SQLite database provider
+  - `Npgsql.EntityFrameworkCore.PostgreSQL` (`10.0.0`) — PostgreSQL / Neon cloud database provider
+  - `Microsoft.EntityFrameworkCore.Sqlite` (`10.0.0`) — Local SQLite fallback provider
   - `SQLitePCLRaw.bundle_e_sqlite3` (`2.1.12`) — Native SQLite library bundle
 - **Styling:** Custom CSS + Bootstrap 5 (included in `wwwroot/lib/bootstrap`)
 
@@ -97,28 +98,35 @@ git clone <repository-url>
 cd CSE325-SmartStock-Inventory-Manager
 ```
 
-### 3. Restore Dependencies & Build
+### 3. Configure Database Connection (Optional for Local SQLite / Required for Neon PostgreSQL)
+To connect to **Neon Cloud PostgreSQL**, create a `.env` file in the root of the repository (ignored by Git):
+```env
+DATABASE_URL=postgresql://<username>:<password>@<endpoint>.neon.tech/<dbname>?sslmode=require&channel_binding=require
+```
+*(If no `.env` or `DATABASE_URL` is set, the application automatically falls back to a local SQLite database `smartstock.db`.)*
+
+### 4. Restore Dependencies & Build
 Restore the required NuGet packages and compile the project:
 ```bash
 dotnet restore SmartStock.Web/SmartStock.Web.csproj
 dotnet build SmartStock.Web/SmartStock.Web.csproj
 ```
 
-### 4. Run the Application
+### 5. Run the Application
 Start the Blazor web server from the root directory:
 ```bash
 dotnet run --project SmartStock.Web/SmartStock.Web.csproj
 ```
 *(Alternatively, you can `cd SmartStock.Web` and run `dotnet watch` for hot-reload during development.)*
 
-### 5. Open in Browser
+### 6. Open in Browser
 Once the server starts, open your browser and navigate to:
 - **HTTP:** `http://localhost:5252`
 - **HTTPS:** `https://localhost:7126` (if running with the `https` launch profile: `dotnet run --project SmartStock.Web --launch-profile https`)
 
-> **Note on Database Setup:** No manual migration step is required to start the app. On startup, `Program.cs` calls `db.Database.EnsureCreated()` and `AuthService.EnsureSeedDataAsync()`, which automatically creates `SmartStock.Web/smartstock.db`, seeds the starting product categories, and creates a default demo account.
+> **Note on Database Setup:** No manual migration step is required to start the app. On startup, `Program.cs` calls `db.Database.EnsureCreated()` and `AuthService.EnsureSeedDataAsync()`, which automatically creates all tables in Neon PostgreSQL (or SQLite), seeds the product categories and initial kitchen inventory items, and creates a default demo account.
 
-### 6. Authentication & Demo Credentials
+### 7. Authentication & Demo Credentials
 SmartStock allows **public read-only browsing** of the dashboard, inventory, products, categories, and sales history. Signing in is required to **add, edit, or delete** products/categories or **record sales**.
 
 You can register a new account at `/login` (or `/register`), or sign in immediately using the seeded demo account:

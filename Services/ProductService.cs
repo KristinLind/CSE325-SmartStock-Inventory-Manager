@@ -87,14 +87,17 @@ public class ProductService(IDbContextFactory<SmartStockDbContext> factory)
     {
         await using var db = await factory.CreateDbContextAsync();
 
-        // Totals are calculated in memory because SQLite can't add up decimal columns
-        var products = await db.Products.ToListAsync();
+        var totalProducts = await db.Products.CountAsync();
+        var totalUnits = await db.Products.SumAsync(p => (int?)p.Quantity) ?? 0;
+        var inventoryValue = await db.Products.SumAsync(p => (decimal?)p.Price * p.Quantity) ?? 0m;
+        var lowStockCount = await db.Products.CountAsync(p => p.Quantity > 0 && p.Quantity <= p.ReorderLevel);
+        var outOfStockCount = await db.Products.CountAsync(p => p.Quantity == 0);
 
         return new InventorySummary(
-            TotalProducts: products.Count,
-            TotalUnits: products.Sum(p => p.Quantity),
-            InventoryValue: products.Sum(p => p.Price * p.Quantity),
-            LowStockCount: products.Count(p => p.Quantity > 0 && p.IsLowStock),
-            OutOfStockCount: products.Count(p => p.Quantity == 0));
+            TotalProducts: totalProducts,
+            TotalUnits: totalUnits,
+            InventoryValue: inventoryValue,
+            LowStockCount: lowStockCount,
+            OutOfStockCount: outOfStockCount);
     }
 }
