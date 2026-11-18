@@ -513,9 +513,13 @@
             await LoadFromDatabaseAsync();
             CancelForm();
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             errorMessage = ex.Message;
+        }
+        catch
+        {
+            errorMessage = "Unable to save the product. Please try again.";
         }
     }
 
