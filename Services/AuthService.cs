@@ -80,11 +80,10 @@ public class AuthService(
         // Ensure Inventory categories exist and seed initial kitchen products if Products table is empty
         string[] requiredCategories =
         [
-            "Appliances",
-            "Cookware",
-            "Utensils",
-            "Kitchen Accessories",
-            "Food Storage"
+            "Small Kitchen Appliances",
+            "Cookware and Utensils",
+            "Food Storage and Organization",
+            "Home Essentials and Accessories"
         ];
 
         var existingCategories = await db.Categories.ToListAsync();
@@ -106,21 +105,21 @@ public class AuthService(
         if (!await db.Products.AnyAsync())
         {
             db.Products.AddRange(
-                new Product { Sku = "APP-001", Name = "Hand Blender", CategoryId = CatId("Appliances"), Price = 49.99m, Quantity = 12, ReorderLevel = 5, ImageUrl = "/images/hand-blenders.webp" },
-                new Product { Sku = "APP-002", Name = "Countertop Blender", CategoryId = CatId("Appliances"), Price = 129.99m, Quantity = 3, ReorderLevel = 5, ImageUrl = "/images/blender.webp" },
-                new Product { Sku = "COO-001", Name = "Copper Stock Pot", CategoryId = CatId("Cookware"), Price = 89.99m, Quantity = 8, ReorderLevel = 5, ImageUrl = "/images/copper-pot.webp" },
-                new Product { Sku = "APP-003", Name = "Instant Pot", CategoryId = CatId("Appliances"), Price = 119.99m, Quantity = 6, ReorderLevel = 5, ImageUrl = "/images/instant-pot.webp" },
-                new Product { Sku = "APP-004", Name = "Stand Mixer", CategoryId = CatId("Appliances"), Price = 299.99m, Quantity = 4, ReorderLevel = 5, ImageUrl = "/images/stand-mixer.webp" },
-                new Product { Sku = "COO-002", Name = "Cast Iron Pan", CategoryId = CatId("Cookware"), Price = 54.99m, Quantity = 10, ReorderLevel = 5, ImageUrl = "/images/cast-iron-pan.webp" },
-                new Product { Sku = "APP-005", Name = "Rice Cooker", CategoryId = CatId("Appliances"), Price = 79.99m, Quantity = 5, ReorderLevel = 5, ImageUrl = "/images/rice-cooker.webp" },
-                new Product { Sku = "UTE-001", Name = "Pastry Cutter", CategoryId = CatId("Utensils"), Price = 14.99m, Quantity = 18, ReorderLevel = 5, ImageUrl = "/images/pastry-cutter.webp" },
-                new Product { Sku = "UTE-002", Name = "Vegetable Peelers", CategoryId = CatId("Utensils"), Price = 12.99m, Quantity = 2, ReorderLevel = 5, ImageUrl = "/images/vegetable-peelers.webp" },
-                new Product { Sku = "UTE-003", Name = "Wooden Spoon", CategoryId = CatId("Utensils"), Price = 8.99m, Quantity = 25, ReorderLevel = 5, ImageUrl = "/images/wooden-spoon.webp" },
-                new Product { Sku = "UTE-004", Name = "Whisks", CategoryId = CatId("Utensils"), Price = 11.99m, Quantity = 15, ReorderLevel = 5, ImageUrl = "/images/whisks.webp" },
-                new Product { Sku = "ACC-001", Name = "Silverware Set", CategoryId = CatId("Kitchen Accessories"), Price = 39.99m, Quantity = 0, ReorderLevel = 5, ImageUrl = "/images/silverware.webp" },
-                new Product { Sku = "STO-001", Name = "Glass Food Storage Containers", CategoryId = CatId("Food Storage"), Price = 29.99m, Quantity = 25, ReorderLevel = 5, ImageUrl = "/images/glass-storage.webp" },
-                new Product { Sku = "STO-002", Name = "Kitchen Storage Jars", CategoryId = CatId("Food Storage"), Price = 24.99m, Quantity = 30, ReorderLevel = 5, ImageUrl = "/images/storage-jars.webp" },
-                new Product { Sku = "STO-003", Name = "White Storage Containers", CategoryId = CatId("Food Storage"), Price = 19.99m, Quantity = 20, ReorderLevel = 5, ImageUrl = "/images/white-containers.webp" }
+                new Product { Sku = "APP-001", Name = "Hand Blender", CategoryId = CatId("Small Kitchen Appliances"), Price = 49.99m, Quantity = 12, ReorderLevel = 5, ImageUrl = "/images/hand-blenders.webp" },
+                new Product { Sku = "APP-002", Name = "Countertop Blender", CategoryId = CatId("Small Kitchen Appliances"), Price = 129.99m, Quantity = 3, ReorderLevel = 5, ImageUrl = "/images/blender.webp" },
+                new Product { Sku = "COO-001", Name = "Copper Stock Pot", CategoryId = CatId("Cookware and Utensils"), Price = 89.99m, Quantity = 8, ReorderLevel = 5, ImageUrl = "/images/copper-pot.webp" },
+                new Product { Sku = "APP-003", Name = "Instant Pot", CategoryId = CatId("Small Kitchen Appliances"), Price = 119.99m, Quantity = 6, ReorderLevel = 5, ImageUrl = "/images/instant-pot.webp" },
+                new Product { Sku = "APP-004", Name = "Stand Mixer", CategoryId = CatId("Small Kitchen Appliances"), Price = 299.99m, Quantity = 4, ReorderLevel = 5, ImageUrl = "/images/stand-mixer.webp" },
+                new Product { Sku = "COO-002", Name = "Cast Iron Pan", CategoryId = CatId("Cookware and Utensils"), Price = 54.99m, Quantity = 10, ReorderLevel = 5, ImageUrl = "/images/cast-iron-pan.webp" },
+                new Product { Sku = "APP-005", Name = "Rice Cooker", CategoryId = CatId("Small Kitchen Appliances"), Price = 79.99m, Quantity = 5, ReorderLevel = 5, ImageUrl = "/images/rice-cooker.webp" },
+                new Product { Sku = "UTE-001", Name = "Pastry Cutter", CategoryId = CatId("Cookware and Utensils"), Price = 14.99m, Quantity = 18, ReorderLevel = 5, ImageUrl = "/images/pastry-cutter.webp" },
+                new Product { Sku = "UTE-002", Name = "Vegetable Peelers", CategoryId = CatId("Cookware and Utensils"), Price = 12.99m, Quantity = 2, ReorderLevel = 5, ImageUrl = "/images/vegetable-peelers.webp" },
+                new Product { Sku = "UTE-003", Name = "Wooden Spoon", CategoryId = CatId("Cookware and Utensils"), Price = 8.99m, Quantity = 25, ReorderLevel = 5, ImageUrl = "/images/wooden-spoon.webp" },
+                new Product { Sku = "UTE-004", Name = "Whisks", CategoryId = CatId("Cookware and Utensils"), Price = 11.99m, Quantity = 15, ReorderLevel = 5, ImageUrl = "/images/whisks.webp" },
+                new Product { Sku = "ACC-001", Name = "Silverware Set", CategoryId = CatId("Home Essentials and Accessories"), Price = 39.99m, Quantity = 0, ReorderLevel = 5, ImageUrl = "/images/silverware.webp" },
+                new Product { Sku = "STO-001", Name = "Glass Food Storage Containers", CategoryId = CatId("Food Storage and Organization"), Price = 29.99m, Quantity = 25, ReorderLevel = 5, ImageUrl = "/images/glass-storage.webp" },
+                new Product { Sku = "STO-002", Name = "Kitchen Storage Jars", CategoryId = CatId("Food Storage and Organization"), Price = 24.99m, Quantity = 30, ReorderLevel = 5, ImageUrl = "/images/storage-jars.webp" },
+                new Product { Sku = "STO-003", Name = "White Storage Containers", CategoryId = CatId("Food Storage and Organization"), Price = 19.99m, Quantity = 20, ReorderLevel = 5, ImageUrl = "/images/white-containers.webp" }
             );
             await db.SaveChangesAsync();
         }

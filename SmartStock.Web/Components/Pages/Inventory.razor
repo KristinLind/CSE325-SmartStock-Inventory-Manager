@@ -133,11 +133,10 @@
                 <div>
                     <label for="product-category">Category</label>
                     <select id="product-category" @bind="formCategory">
-                        <option value="Appliances">Appliances</option>
-                        <option value="Cookware">Cookware</option>
-                        <option value="Utensils">Utensils</option>
-                        <option value="Kitchen Accessories">Kitchen Accessories</option>
-                        <option value="Food Storage">Food Storage</option>
+                        <option value="Small Kitchen Appliances">Small Kitchen Appliances</option>
+                        <option value="Cookware and Utensils">Cookware and Utensils</option>
+                        <option value="Food Storage and Organization">Food Storage and Organization</option>
+                        <option value="Home Essentials and Accessories">Home Essentials and Accessories</option>
                     </select>
                 </div>
 
@@ -207,11 +206,10 @@
                 <label for="inventory-category">Filter by category</label>
                 <select id="inventory-category" @bind="selectedCategory">
                     <option value="All">All Categories</option>
-                    <option value="Appliances">Appliances</option>
-                    <option value="Cookware">Cookware</option>
-                    <option value="Utensils">Utensils</option>
-                    <option value="Kitchen Accessories">Kitchen Accessories</option>
-                    <option value="Food Storage">Food Storage</option>
+                    <option value="Small Kitchen Appliances">Small Kitchen Appliances</option>
+                    <option value="Cookware and Utensils">Cookware and Utensils</option>
+                    <option value="Food Storage and Organization">Food Storage and Organization</option>
+                    <option value="Home Essentials and Accessories">Home Essentials and Accessories</option>
                 </select>
             </div>
         </div>
@@ -347,7 +345,7 @@
             Name = p.Name,
             Sku = p.Sku,
             Image = p.ImageUrl,
-            Category = p.Category?.Name ?? "Appliances",
+            Category = p.Category?.Name ?? "Small Kitchen Appliances",
             Price = p.Price,
             Quantity = p.Quantity
         }).ToList();
@@ -373,11 +371,10 @@
     {
         string[] validCategories =
         {
-            "Appliances",
-            "Cookware",
-            "Utensils",
-            "Kitchen Accessories",
-            "Food Storage"
+            "Small Kitchen Appliances",
+            "Cookware and Utensils",
+            "Food Storage and Organization",
+            "Home Essentials and Accessories"
         };
 
         var category = CategoryFromUrl?.Trim();
@@ -398,7 +395,7 @@
     private string formName = "";
     private string formSku = "";
     private string formImage = "";
-    private string formCategory = "Appliances";
+    private string formCategory = "Small Kitchen Appliances";
     private decimal formPrice;
     private int formQuantity;
     private string errorMessage = "";
@@ -415,7 +412,7 @@
         formName = "";
         formSku = "";
         formImage = "";
-        formCategory = "Appliances";
+        formCategory = "Small Kitchen Appliances";
         formPrice = 0;
         formQuantity = 0;
         errorMessage = "";
