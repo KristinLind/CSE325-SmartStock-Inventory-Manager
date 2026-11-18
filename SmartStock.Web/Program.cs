@@ -10,6 +10,7 @@ builder.Services.AddDbContextFactory<SmartStockDbContext>(options =>
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<SaleService>();
+builder.Services.AddScoped<AuthService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -17,12 +18,13 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-// Create the database file (and the starting categories) on first run
+// Create the database file (and the starting categories + demo user) on first run
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<SmartStockDbContext>>();
     using var db = factory.CreateDbContext();
     db.Database.EnsureCreated();
+    await AuthService.EnsureSeedDataAsync(factory);
 }
 
 // Configure the HTTP request pipeline.

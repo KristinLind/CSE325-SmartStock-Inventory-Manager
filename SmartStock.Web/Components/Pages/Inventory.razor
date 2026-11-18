@@ -1,5 +1,8 @@
 @page "/inventory"
 @rendermode InteractiveServer
+@implements IDisposable
+@inject AuthService Auth
+@inject NavigationManager Nav
 
 <PageTitle>SmartStock | Inventory Management</PageTitle>
 
@@ -11,11 +14,29 @@
             <p>Add, update, and organize your kitchen products.</p>
         </div>
 
-        <button class="inventory-add-button"
-                @onclick="ShowAddForm">
-            + Add Product
-        </button>
+        @if (Auth.IsAuthenticated)
+        {
+            <button class="inventory-add-button"
+                    @onclick="ShowAddForm">
+                + Add Product
+            </button>
+        }
+        else
+        {
+            <a class="inventory-add-button inventory-signin-cta"
+               href="/login?returnUrl=/inventory">
+                Sign In to Manage Inventory
+            </a>
+        }
     </div>
+
+    @if (!Auth.IsAuthenticated)
+    {
+        <div class="inventory-readonly-banner" role="status">
+            <span><strong>Read-Only View:</strong> You can browse, search, filter, and view product details. Sign in to add, edit, or delete products.</span>
+            <a href="/login?returnUrl=/inventory">Sign In →</a>
+        </div>
+    }
 
     <div class="inventory-summary">
         <div class="inventory-summary-card">
@@ -249,15 +270,18 @@
                                         View Details
                                     </button>
 
-                                    <button class="edit-button"
-                                            @onclick="() => EditProduct(product)">
-                                        Edit
-                                    </button>
+                                    @if (Auth.IsAuthenticated)
+                                    {
+                                        <button class="edit-button"
+                                                @onclick="() => EditProduct(product)">
+                                            Edit
+                                        </button>
 
-                                    <button class="delete-button"
-                                            @onclick="() => ConfirmDelete(product.Id)">
-                                        Delete
-                                    </button>
+                                        <button class="delete-button"
+                                                @onclick="() => ConfirmDelete(product.Id)">
+                                            Delete
+                                        </button>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -322,6 +346,27 @@
     private string searchText = "";
     private string selectedCategory = "All";
 
+    protected override void OnInitialized()
+    {
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        if (!Auth.IsAuthenticated)
+        {
+            showForm = false;
+            editingId = null;
+            productToDeleteId = null;
+        }
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
+    }
+
     protected override void OnParametersSet()
     {
         string[] validCategories =
@@ -358,6 +403,12 @@
 
     private void ShowAddForm()
     {
+        if (!Auth.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login?returnUrl=/inventory");
+            return;
+        }
+
         editingId = null;
         formName = "";
         formSku = "";
@@ -383,6 +434,12 @@
 
     private void EditProduct(InventoryProduct product)
     {
+        if (!Auth.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login?returnUrl=/inventory");
+            return;
+        }
+
         editingId = product.Id;
         formName = product.Name;
         formSku = product.Sku;
@@ -396,6 +453,12 @@
 
     private void SaveProduct()
     {
+        if (!Auth.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login?returnUrl=/inventory");
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(formName))
         {
             errorMessage = "Please enter a product name.";
@@ -491,28 +554,69 @@
 
     private int? productToDeleteId;
 
-private void ConfirmDelete(int id)
-{
-    productToDeleteId = id;
-}
-
-private void DeleteConfirmed()
-{
-    if (productToDeleteId.HasValue)
+    private void ConfirmDelete(int id)
     {
-        DeleteProduct(productToDeleteId.Value);
+        if (!Auth.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login?returnUrl=/inventory");
+            return;
+        }
+        productToDeleteId = id;
     }
 
-    productToDeleteId = null;
-}
+    private void DeleteConfirmed()
+    {
+        if (!Auth.IsAuthenticated)
+        {
+            productToDeleteId = null;
+            Nav.NavigateTo("/login?returnUrl=/inventory");
+            return;
+        }
 
-private void CancelDelete()
-{
-    productToDeleteId = null;
-}
+        if (productToDeleteId.HasValue)
+        {
+            DeleteProduct(productToDeleteId.Value);
+        }
+
+        productToDeleteId = null;
+    }
+
+    private void CancelDelete()
+    {
+        productToDeleteId = null;
+    }
 }
 
 <style>
+    .inventory-readonly-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: #fff8e6;
+        border: 1px solid #f59e0b;
+        color: #78350f;
+        padding: 14px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-size: 0.95rem;
+    }
+
+    .inventory-readonly-banner a {
+        color: #b45309;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .inventory-readonly-banner a:hover {
+        text-decoration: underline;
+    }
+
+    .inventory-signin-cta {
+        text-decoration: none;
+        display: inline-block;
+    }
     .inventory-manager {
         max-width: 1400px;
         margin: 0 auto;

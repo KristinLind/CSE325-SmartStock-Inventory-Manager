@@ -1,4 +1,8 @@
 ﻿
+@implements IDisposable
+@inject AuthService Auth
+@inject NavigationManager Nav
+
 <div class="smartstock-navigation">
 
     <NavLink class="smartstock-brand"
@@ -19,22 +23,61 @@
             Inventory
         </NavLink>
 
-        <NavLink href="login"
-                 class="smartstock-login-link">
-            Sign In
+        <NavLink href="products">
+            Products
         </NavLink>
+
+        <NavLink href="categories">
+            Categories
+        </NavLink>
+
+        <NavLink href="sales">
+            Record Sale
+        </NavLink>
+
+        @if (Auth.IsAuthenticated && Auth.CurrentUser is not null)
+        {
+            <span class="smartstock-user-badge" title="@Auth.CurrentUser.Email">
+                @Auth.CurrentUser.FullName
+            </span>
+            <button type="button"
+                    class="smartstock-logout-button"
+                    @onclick="HandleLogoutAsync">
+                Sign Out
+            </button>
+        }
+        else
+        {
+            <NavLink href="login"
+                     class="smartstock-login-link">
+                Sign In
+            </NavLink>
+        }
 
     </nav>
 
-    <div class="nav-item px-3">
-    <NavLink class="nav-link" href="products">Products</NavLink>
-</div>
-<div class="nav-item px-3">
-    <NavLink class="nav-link" href="categories">Categories</NavLink>
-</div>
-<div class="nav-item px-3">
-    <NavLink class="nav-link" href="sales">Record Sale</NavLink>
 </div>
 
-</div>
+@code {
+    protected override void OnInitialized()
+    {
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
+    }
+
+    private void HandleAuthStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleLogoutAsync()
+    {
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
+    }
+}
 
