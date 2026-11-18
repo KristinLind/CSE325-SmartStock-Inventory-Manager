@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject ProductService ProductSvc
 
 <PageTitle>SmartStock | Dashboard</PageTitle>
 
@@ -28,24 +29,25 @@
             <h1>Kitchen Inventory Dashboard</h1>
             <p>Organized inventory. Smarter business.</p>
         </div>
+        <span class="dashboard-preview-label">Live Cloud DB</span>
     </section>
 
     <section class="dashboard-stats">
         <div class="stat-card">
             <h2>Total Products</h2>
-            <p class="stat-number">128</p>
+            <p class="stat-number">@(summary?.TotalProducts ?? 0)</p>
             <div class="stat-accent navy-accent"></div>
         </div>
 
         <div class="stat-card">
             <h2>Low Stock Items</h2>
-            <p class="stat-number tomato-text">8</p>
+            <p class="stat-number tomato-text">@((summary?.LowStockCount ?? 0) + (summary?.OutOfStockCount ?? 0))</p>
             <div class="stat-accent tomato-accent"></div>
         </div>
 
         <div class="stat-card">
             <h2>Inventory Value</h2>
-            <p class="stat-number">$24,850</p>
+            <p class="stat-number">@((summary?.InventoryValue ?? 0m).ToString("C"))</p>
             <div class="stat-accent saffron-accent"></div>
         </div>
     </section>
@@ -60,7 +62,7 @@
 
     <div class="product-grid">
 
-        <!-- Cookware -->
+        <!-- Cookware and Utensils -->
         <article class="product-card">
             <div class="product-placeholder">
                 <img src="/images/copper-pot.webp"
@@ -68,13 +70,13 @@
                      class="product-image" />
             </div>
             <div class="product-details">
-                <h3>Cookware</h3>
+                <h3>Cookware and Utensils</h3>
                 <p>Pots, pans, and cooking essentials</p>
-                <a href="/inventory?category=Cookware">View Inventory</a>
+                <a href="/inventory?category=Cookware%20and%20Utensils">View Inventory</a>
             </div>
         </article>
 
-        <!-- Appliances -->
+        <!-- Small Kitchen Appliances -->
         <article class="product-card">
             <div class="product-placeholder">
                 <img src="/images/stand-mixer.webp"
@@ -82,27 +84,13 @@
                      class="product-image" />
             </div>
             <div class="product-details">
-                <h3>Appliances</h3>
+                <h3>Small Kitchen Appliances</h3>
                 <p>Blenders, mixers, and kitchen appliances</p>
-                <a href="/inventory?category=Appliances">View Inventory</a>
+                <a href="/inventory?category=Small%20Kitchen%20Appliances">View Inventory</a>
             </div>
         </article>
 
-        <!-- Kitchen Utensils -->
-        <article class="product-card">
-            <div class="product-placeholder">
-                <img src="/images/whisks.webp"
-                     alt="two whisks"
-                     class="product-image" />
-            </div>
-            <div class="product-details">
-                <h3>Kitchen Utensils</h3>
-                <p>Everyday kitchen tools and accessories</p>
-                <a href="/inventory?category=Utensils">View Inventory</a>
-            </div>
-        </article>
-
-        <!-- Food Storage -->
+        <!-- Food Storage and Organization -->
         <article class="product-card">
             <div class="product-placeholder">
                 <img src="/images/kitchen-products.webp"
@@ -110,9 +98,23 @@
                      class="product-image" />
             </div>
             <div class="product-details">
-                <h3>Food Storage</h3>
+                <h3>Food Storage and Organization</h3>
                 <p>Containers and organization essentials</p>
-                <a href="/inventory?category=Food%20Storage">View Inventory</a>
+                <a href="/inventory?category=Food%20Storage%20and%20Organization">View Inventory</a>
+            </div>
+        </article>
+
+        <!-- Home Essentials and Accessories -->
+        <article class="product-card">
+            <div class="product-placeholder">
+                <img src="/images/silverware.webp"
+                     alt="Silverware set"
+                     class="product-image" />
+            </div>
+            <div class="product-details">
+                <h3>Home Essentials and Accessories</h3>
+                <p>Everyday household essentials and accessories</p>
+                <a href="/inventory?category=Home%20Essentials%20and%20Accessories">View Inventory</a>
             </div>
         </article>
 
@@ -120,6 +122,15 @@
 </section>
 
 </div>
+
+@code {
+    private InventorySummary? summary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await ProductSvc.GetSummaryAsync();
+    }
+}
 
 @*@page "/"
 @inject ProductService Products
@@ -212,4 +223,3 @@ else
         (salesToday, revenueToday) = await SalesSvc.GetTodaySummaryAsync();
     }
 }@**@
-
