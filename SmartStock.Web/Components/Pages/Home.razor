@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject ProductService ProductSvc
 
 <PageTitle>SmartStock | Dashboard</PageTitle>
 
@@ -28,25 +29,25 @@
             <h1>Kitchen Inventory Dashboard</h1>
             <p>Organized inventory. Smarter business.</p>
         </div>
-        <span class="dashboard-preview-label">Design Preview</span>
+        <span class="dashboard-preview-label">Live Cloud DB</span>
     </section>
 
     <section class="dashboard-stats">
         <div class="stat-card">
             <h2>Total Products</h2>
-            <p class="stat-number">128</p>
+            <p class="stat-number">@(summary?.TotalProducts ?? 0)</p>
             <div class="stat-accent navy-accent"></div>
         </div>
 
         <div class="stat-card">
             <h2>Low Stock Items</h2>
-            <p class="stat-number tomato-text">8</p>
+            <p class="stat-number tomato-text">@((summary?.LowStockCount ?? 0) + (summary?.OutOfStockCount ?? 0))</p>
             <div class="stat-accent tomato-accent"></div>
         </div>
 
         <div class="stat-card">
             <h2>Inventory Value</h2>
-            <p class="stat-number">$24,850</p>
+            <p class="stat-number">@((summary?.InventoryValue ?? 0m).ToString("C"))</p>
             <div class="stat-accent saffron-accent"></div>
         </div>
     </section>
@@ -121,6 +122,15 @@
 </section>
 
 </div>
+
+@code {
+    private InventorySummary? summary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await ProductSvc.GetSummaryAsync();
+    }
+}
 
 @*@page "/"
 @inject ProductService Products

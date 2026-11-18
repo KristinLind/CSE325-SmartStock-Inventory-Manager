@@ -27,6 +27,9 @@ public class Product
     [Range(0, 1000000, ErrorMessage = "Reorder level cannot be negative")]
     public int ReorderLevel { get; set; } = 5;
 
+    [StringLength(250)]
+    public string ImageUrl { get; set; } = "";
+
     // Calculated values (not stored in the database)
     public bool IsLowStock => Quantity <= ReorderLevel;
 
