@@ -90,22 +90,30 @@
                                 <StockBadge Product="item" />
                             </td>
                             <td class="text-end">
-                                @if (Auth.IsAuthenticated)
+                               @if (Auth.IsAuthenticated)
                                 {
                                     @if (confirmId == item.Id)
                                     {
                                         <span>Delete?</span>
-                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">Yes</button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="() => confirmId = null">No</button>
-                                        <button class="btn btn-sm btn-outline-success" disabled="@(item.Quantity == 0)"
-                                                @onclick="() => AddToCart(item)">Add to cart</button>
+                                        <button class="btn btn-sm btn-danger"
+                                                @onclick="() => DeleteAsync(item.Id)">Yes</button>
+                                        <button class="btn btn-sm btn-secondary"
+                                                @onclick="() => confirmId = null">No</button>
                                     }
                                     else
                                     {
-                                        <a class="btn btn-sm btn-outline-primary" href="products/edit/@item.Id">Edit</a>
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmId = item.Id">Delete</button>
+                                        <a class="btn btn-sm btn-outline-primary"
+                                        href="products/edit/@item.Id">Edit</a>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => confirmId = item.Id">Delete</button>
                                     }
                                 }
+
+                                <button class="btn btn-sm btn-outline-success"
+                                        disabled="@(item.Quantity == 0)"
+                                        @onclick="() => AddToCart(item)">
+                                    Add to cart
+                                </button>
                             </td>
                         </tr>
                     }
@@ -170,6 +178,6 @@
 
     public void Dispose()
     {
-        Auth.OnAuthStateChanged -= HandleAuthStateChanged;
+    Auth.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 }
