@@ -1,83 +1,100 @@
 .smartstock-navigation {
     max-width: 1600px;
-    min-height: 76px;
     margin: 0 auto;
-    padding: 15px 5%;
+    padding: 18px 5% 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Top row: Brand and account controls */
+.smartstock-top-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
 }
 
-.smartstock-brand {
-    color: #ffffff;
+.smartstock-navigation ::deep .smartstock-brand {
+    color: #ffc857;
     font-family: Georgia, serif;
-    font-size: 1.7rem;
-    font-weight: 700;
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.1;
     text-decoration: none;
-    white-space: nowrap;
+    display: inline-block;
+}
+
+.smartstock-navigation ::deep .smartstock-brand:hover {
+    color: #ffffff;
 }
 
 .smartstock-brand:hover {
-    color: #ffc857;
+    color: #ffffff;
 }
 
+.smartstock-subtitle {
+    color: #c5cfdc;
+    font-size: 0.78rem;
+    margin-top: 3px;
+}
+
+.smartstock-account {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.smartstock-user-badge {
+    color: #c5cfdc;
+    font-size: 0.72rem;
+    font-weight: 400;
+    text-align: right;
+}
+
+/* Bottom row: Navigation links */
 .smartstock-links {
     display: flex;
     align-items: center;
-    gap: 30px;
+    justify-content: space-between;
+    gap: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 13px;
 }
 
 .smartstock-links ::deep a {
     color: #ffffff;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
     transition: color 0.2s ease;
 }
 
-.smartstock-links ::deep a:hover {
-    color: #ffc857;
-}
-
+.smartstock-links ::deep a:hover,
 .smartstock-links ::deep a.active {
     color: #ffc857;
 }
 
-.smartstock-links ::deep .smartstock-login-link {
-    background: #f44336;
-    color: #ffffff;
-    padding: 11px 22px;
-    border-radius: 9px;
-    font-weight: 700;
+.smartstock-links ::deep .smartstock-cart-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.smartstock-links ::deep .smartstock-login-link:hover {
-    background: #d9362b;
-    color: #ffffff;
-}
-
-.smartstock-user-badge {
-    background: rgba(255, 200, 87, 0.16);
+.smartstock-cart-link svg {
     color: #ffc857;
-    border: 1px solid rgba(255, 200, 87, 0.45);
-    padding: 7px 14px;
-    border-radius: 20px;
-    font-size: 0.88rem;
-    font-weight: 700;
-    white-space: nowrap;
 }
 
 .smartstock-logout-button {
     background: transparent;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.45);
-    padding: 9px 16px;
+    padding: 8px 16px;
     border-radius: 9px;
-    font-weight: 700;
-    font-size: 0.9rem;
+    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-    white-space: nowrap;
 }
 
 .smartstock-logout-button:hover {
@@ -85,20 +102,31 @@
     border-color: #f44336;
 }
 
-@media (max-width: 600px) {
+.smartstock-account ::deep .smartstock-login-link {
+    background: #f44336;
+    color: #ffffff;
+    padding: 9px 18px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.smartstock-account ::deep .smartstock-login-link:hover {
+    background: #d9362b;
+}
+
+@media (max-width: 800px) {
     .smartstock-navigation {
-        flex-direction: column;
-        gap: 14px;
-        padding: 18px 4%;
+        padding: 16px 4%;
     }
 
     .smartstock-links {
-        gap: 20px;
         flex-wrap: wrap;
         justify-content: center;
+        gap: 16px;
     }
 
     .smartstock-brand {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
 }
