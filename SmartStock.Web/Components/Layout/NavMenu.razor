@@ -1,27 +1,54 @@
 ﻿@inject AuthService Auth
 @inject NavigationManager Nav
-
-@implements IDisposable
 @inject CartService CartSvc
 
-
-@code {
-    protected override void OnInitialized()
-    {
-        CartSvc.OnChange += Refresh;
-        Auth.OnAuthStateChanged += HandleAuthStateChanged;
-    }
-
-    private void Refresh() => InvokeAsync(StateHasChanged);
-}
+@implements IDisposable
 
 <div class="smartstock-navigation">
 
-    <NavLink class="smartstock-brand" href="" Match="NavLinkMatch.All">
-        SmartStock
-    </NavLink>
+    <!-- TOP ROW: Brand and account information -->
+    <div class="smartstock-top-row">
 
-    <nav class="smartstock-links" aria-label="Main navigation">
+        <div>
+            <NavLink class="smartstock-brand"
+                     href=""
+                     Match="NavLinkMatch.All">
+                SmartStock
+            </NavLink>
+
+            <div class="smartstock-subtitle">
+                Inventory Manager
+            </div>
+        </div>
+
+        <div class="smartstock-account">
+            @if (Auth.IsAuthenticated && Auth.CurrentUser is not null)
+            {
+                <button type="button"
+                        class="smartstock-logout-button"
+                        @onclick="HandleLogoutAsync">
+                    Sign Out
+                </button>
+
+                <span class="smartstock-user-badge"
+                      title="@Auth.CurrentUser.Email">
+                    @Auth.CurrentUser.FullName
+                </span>
+            }
+            else
+            {
+                <NavLink href="login"
+                         class="smartstock-login-link">
+                    Sign In
+                </NavLink>
+            }
+        </div>
+
+    </div>
+
+    <!-- BOTTOM ROW: Main navigation -->
+    <nav class="smartstock-links"
+         aria-label="Main navigation">
 
         <NavLink href="" Match="NavLinkMatch.All">
             Dashboard
@@ -43,48 +70,47 @@
             Record Sale
         </NavLink>
 
-        <NavLink href="cart" class="smartstock-cart-link">
+        <NavLink href="cart"
+                 class="smartstock-cart-link"
+                 aria-label="@($"Shopping cart, {CartSvc.ItemCount} items")">
+
             <svg xmlns="http://www.w3.org/2000/svg"
-                width="23" height="23"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true">
+                 width="23"
+                 height="23"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
                 <circle cx="9" cy="21" r="1" />
                 <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2
-                 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
-            <span>Cart</span>
+
             <span class="badge rounded-pill bg-warning text-dark">
                 @CartSvc.ItemCount
             </span>
-        </NavLink>
 
-        @if (Auth.IsAuthenticated && Auth.CurrentUser is not null)
-        {
-            <span class="smartstock-user-badge" title="@Auth.CurrentUser.Email">
-                @Auth.CurrentUser.FullName
-            </span>
-            <button type="button" class="smartstock-logout-button" @onclick="HandleLogoutAsync">
-                Sign Out
-            </button>
-        }
-        else
-        {
-            <NavLink href="login" class="smartstock-login-link">
-                Sign In
-            </NavLink>
-        }
+        </NavLink>
 
     </nav>
 
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        CartSvc.OnChange += Refresh;
+        Auth.OnAuthStateChanged += HandleAuthStateChanged;
+    }
+
+    private void Refresh()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     private void HandleAuthStateChanged()
     {
         _ = InvokeAsync(StateHasChanged);
