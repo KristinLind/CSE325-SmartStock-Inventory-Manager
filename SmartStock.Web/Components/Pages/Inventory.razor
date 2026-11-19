@@ -204,13 +204,15 @@
             </div>
             <div>
                 <label for="inventory-category">Filter by category</label>
+                
                 <select id="inventory-category" @bind="selectedCategory">
                     <option value="All">All Categories</option>
-                    <option value="Small Kitchen Appliances">Small Kitchen Appliances</option>
-                    <option value="Cookware and Utensils">Cookware and Utensils</option>
-                    <option value="Food Storage and Organization">Food Storage and Organization</option>
-                    <option value="Home Essentials and Accessories">Home Essentials and Accessories</option>
+                    @foreach (var category in dbCategories)
+                    {
+                        <option value="@category.Name">@category.Name</option>
+                    }
                 </select>
+
             </div>
         </div>
         <div class="inventory-table-heading">
@@ -368,22 +370,23 @@
         Auth.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 
+    
     protected override void OnParametersSet()
     {
-        string[] validCategories =
-        {
-            "Small Kitchen Appliances",
-            "Cookware and Utensils",
-            "Food Storage and Organization",
-            "Home Essentials and Accessories"
-        };
-
         var category = CategoryFromUrl?.Trim();
 
-        selectedCategory = validCategories.Contains(category)
-            ? category!
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            selectedCategory = "All";
+            return;
+        }
+
+        selectedCategory = dbCategories.Any(c =>
+            c.Name.Equals(category, StringComparison.OrdinalIgnoreCase))
+            ? category
             : "All";
     }
+
     private List<InventoryProduct> FilteredProducts => products
         .Where(p => (selectedCategory == "All" || p.Category == selectedCategory)
             && (string.IsNullOrWhiteSpace(searchText)

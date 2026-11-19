@@ -104,13 +104,15 @@ public class AuthService(
         }
 
         // Ensure Inventory categories exist and seed initial kitchen products if Products table is empty
+        
         string[] requiredCategories =
         [
-            "Small Kitchen Appliances",
-            "Cookware and Utensils",
+            "Kitchen Appliances",
+            "Cookware",
             "Food Storage and Organization",
-            "Home Essentials and Accessories"
+            "Utensils and Accessories"
         ];
+
 
         var existingCategories = await db.Categories.ToListAsync();
         foreach (var catName in requiredCategories)

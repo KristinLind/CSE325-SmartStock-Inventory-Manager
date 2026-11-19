@@ -33,11 +33,13 @@ public class SmartStockDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         // Starting categories from the team README
+       
         b.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Small Kitchen Appliances" },
-            new Category { Id = 2, Name = "Cookware and Utensils" },
+            new Category { Id = 1, Name = "Kitchen Appliances" },
+            new Category { Id = 2, Name = "Cookware" },
             new Category { Id = 3, Name = "Food Storage and Organization" },
-            new Category { Id = 4, Name = "Home Essentials and Accessories" }
+            new Category { Id = 4, Name = "Utensils and Accessories" }
         );
+
     }
 }
