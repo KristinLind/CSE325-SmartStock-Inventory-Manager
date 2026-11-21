@@ -12,7 +12,7 @@
     <div class="inventory-header">
         <div>
             <p class="inventory-eyebrow">SMARTSTOCK INVENTORY MANAGER</p>
-            <h1>Inventory Management</h1>
+            <h1>@(selectedCategory == "All" ? "Inventory Management" : selectedCategory)</h1>
             <p>Add, update, and organize your kitchen products.</p>
         </div>
 
@@ -54,54 +54,6 @@
             <strong>@products.Sum(p => p.Price * p.Quantity).ToString("C")</strong>
         </div>
     </div>
-    @if (selectedProduct != null)
-    {
-        <section class="inventory-form-card">
-            <h2>Product Details</h2>
-
-            <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
-
-                @if (!string.IsNullOrWhiteSpace(selectedProduct.Image))
-                {
-                    <img src="@selectedProduct.Image"
-                        alt="@selectedProduct.Name"
-                        style="width: 220px; height: 220px; object-fit: contain; border-radius: 12px;" />
-                }
-
-                <div>
-                    <h3>@selectedProduct.Name</h3>
-
-                    <p><strong>SKU:</strong> @selectedProduct.Sku</p>
-                    <p><strong>Category:</strong> @selectedProduct.Category</p>
-                    <p><strong>Unit Price:</strong> @selectedProduct.Price.ToString("C")</p>
-                    <p><strong>Quantity Available:</strong> @selectedProduct.Quantity</p>
-
-                    <p>
-                        <strong>Stock Status:</strong>
-                        @if (selectedProduct.Quantity == 0)
-                        {
-                            <span class="stock-badge out-of-stock">Out of Stock</span>
-                        }
-                        else if (selectedProduct.Quantity < 5)
-                        {
-                            <span class="stock-badge low-stock">Low Stock</span>
-                        }
-                        else
-                        {
-                            <span class="stock-badge in-stock">In Stock</span>
-                        }
-                    </p>
-                </div>
-            </div>
-
-        <div class="inventory-form-actions">
-            <button class="inventory-cancel-button"
-                    @onclick="CloseProductDetails">
-                Close Details
-            </button>
-        </div>
-    </section>
-}
 
     @if (showForm)
     {
@@ -176,26 +128,7 @@
             </div>
         </section>
     }
-    @if (productToDeleteId != null)
-{
-    <div class="inventory-form-card" role="alertdialog"
-         aria-label="Confirm product deletion">
-        <h2>Delete Product?</h2>
-        <p>Are you sure you want to delete this product?</p>
 
-        <div class="inventory-form-actions">
-            <button class="delete-button"
-                    @onclick="DeleteConfirmed">
-                Yes, Delete
-            </button>
-
-            <button class="inventory-cancel-button"
-                    @onclick="CancelDelete">
-                Cancel
-            </button>
-        </div>
-    </div>
-}
     <section class="inventory-table-card">
         <div class="inventory-filters">
             <div>
@@ -287,6 +220,74 @@
                                 </div>
                             </td>
                         </tr>
+
+                        @if (selectedProduct?.Id == product.Id)
+                        {
+                            <tr>
+                                <td colspan="7">
+                                    <div class="inventory-form-card">
+                                        <h2>Product Details</h2>
+
+                                        <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+
+                                            @if (!string.IsNullOrWhiteSpace(selectedProduct.Image))
+                                                {
+                                                <img src="@selectedProduct.Image"
+                                                    alt="@selectedProduct.Name"
+                                                    style="width: 220px; height: 220px; object-fit: contain; border-radius: 12px;" />
+                                            }
+
+                                            <div>
+                                                <h3>@selectedProduct.Name</h3>
+                                                <p><strong>SKU:</strong> @selectedProduct.Sku</p>
+                                                <p><strong>Category:</strong> @selectedProduct.Category</p>
+                                                <p><strong>Unit Price:</strong> @selectedProduct.Price.ToString("C")</p>
+                                                <p><strong>Quantity Available:</strong> @selectedProduct.Quantity</p>
+                                            </div>
+                                            </div>
+
+                                        <div class="inventory-form-actions">
+                                            <button class="inventory-cancel-button"
+                                                    @onclick="CloseProductDetails">
+                                                Close Details
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        @if (productToDeleteId == product.Id)
+                        {
+                            <tr>
+                                <td colspan="7">
+                                    <div class="inventory-delete-confirmation"
+                                         role="alertdialog"
+                                         aria-label="Confirm product deletion">
+
+                                        <strong>Delete @product.Name?</strong>
+
+                                        <p>
+                                            Are you sure you want to permanently
+                                            delete this product?
+                                        </p>
+
+                                        <div class="inventory-form-actions">
+                                            <button class="delete-button"
+                                                    @onclick="DeleteConfirmed">
+                                                Yes, Delete
+                                            </button>
+
+                                            <button class="inventory-cancel-button"
+                                                    @onclick="CancelDelete">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -373,18 +374,9 @@
     
     protected override void OnParametersSet()
     {
-        var category = CategoryFromUrl?.Trim();
-
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            selectedCategory = "All";
-            return;
-        }
-
-        selectedCategory = dbCategories.Any(c =>
-            c.Name.Equals(category, StringComparison.OrdinalIgnoreCase))
-            ? category
-            : "All";
+        selectedCategory = string.IsNullOrWhiteSpace(CategoryFromUrl)
+            ? "All"
+            : CategoryFromUrl.Trim();
     }
 
     private List<InventoryProduct> FilteredProducts => products
@@ -444,6 +436,8 @@
         }
 
         editingId = product.Id;
+        selectedProduct = null;
+        productToDeleteId = null;
         formName = product.Name;
         formSku = product.Sku;
         formImage = product.Image;
@@ -901,4 +895,28 @@
             grid-template-columns: 1fr;
         }
     }
-</style>
+
+        .inventory-delete-confirmation {
+            background: #fff5f5;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 8px 0;
+            }
+
+        .inventory-delete-confirmation strong {
+            display: block;
+            color: #991b1b;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .inventory-delete-confirmation p {
+            color: #7f1d1d;
+            margin: 0 0 12px;
+        }
+
+        .inventory-delete-confirmation .inventory-form-actions {
+            margin-top: 12px;
+        }
+    </style>
