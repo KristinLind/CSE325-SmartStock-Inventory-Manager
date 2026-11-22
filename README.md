@@ -133,4 +133,14 @@ You can register a new account at `/login` (or `/register`), or sign in immediat
 - **Email:** `admin@smartstock.com`
 - **Password:** `SmartStock123!`
 
+## Deploying on Render
+
+The repository includes a root-level Dockerfile for deploying the ASP.NET Core app as a Render web service.
+
+1. Create a **Web Service** from the original `KristinLind/CSE325-SmartStock-Inventory-Manager` repository.
+2. Select the `main` branch and **Docker** as the runtime. Leave the root directory blank so Docker can access the shared `Data`, `Models`, and `Services` folders.
+3. Add `DATABASE_URL` in the Render service's environment settings using the Neon PostgreSQL connection string. Do not commit the `.env` file or expose the connection string in client-side code.
+4. Keep the service listening port at `10000`.
+5. Enable automatic deploys from `main` so merged changes are deployed to production.
+
 
