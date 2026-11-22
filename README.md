@@ -130,8 +130,7 @@ Once the server starts, open your browser and navigate to:
 SmartStock allows **public read-only browsing** of the dashboard, inventory, products, categories, and sales history. Signing in is required to **add, edit, or delete** products/categories or **record sales**.
 
 You can register a new account at `/login` (or `/register`), or sign in immediately using the seeded demo account:
-- **Email:** `admin@smartstock.com`
-- **Password:** `SmartStock123!`
+**Administrator Access:** Login credentials are provided privately to authorized team members and are not published in this repository.
 
 ## Deploying on Render
 

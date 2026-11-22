@@ -53,19 +53,6 @@
                 </p>
             </div>
 
-            @if (!isRegisterMode)
-            {
-                <div class="demo-credentials-box">
-                    <div>
-                        <strong>Demo Account:</strong>
-                        <span>@AuthService.DemoEmail / @AuthService.DemoPassword</span>
-                    </div>
-                    <button type="button" class="demo-fill-button" @onclick="FillDemoCredentials">
-                        Use Demo
-                    </button>
-                </div>
-            }
-
             <form @onsubmit="HandleSubmitAsync"
                   @onsubmit:preventDefault="true">
 
@@ -191,15 +178,6 @@
         isRegisterMode = register;
         errorMessage = "";
         message = "";
-    }
-
-    private void FillDemoCredentials()
-    {
-        isRegisterMode = false;
-        email = AuthService.DemoEmail;
-        password = AuthService.DemoPassword;
-        errorMessage = "";
-        message = "Demo credentials filled. Click 'Sign In' to continue.";
     }
 
     private async Task HandleSubmitAsync()
