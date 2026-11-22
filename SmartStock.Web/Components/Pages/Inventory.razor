@@ -5,6 +5,7 @@
 @inject ProductService ProductSvc
 @inject CategoryService CategorySvc
 @inject NavigationManager Nav
+@inject CartService CartSvc
 
 <PageTitle>SmartStock | Inventory Management</PageTitle>
 
@@ -129,6 +130,13 @@
         </section>
     }
 
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="inventory-form-card" role="alert">
+            <p class="inventory-error">@errorMessage</p>
+        </div>
+    }
+    
     <section class="inventory-table-card">
         <div class="inventory-filters">
             <div>
@@ -215,6 +223,12 @@
                                         <button class="delete-button"
                                                 @onclick="() => ConfirmDelete(product.Id)">
                                             Delete
+                                        </button>
+
+                                        <button class="inventory-cart-button"
+                                                disabled="@(product.Quantity == 0)"
+                                                @onclick="() => AddToCart(product)">
+                                            Add to Cart
                                         </button>
                                     }
                                 </div>
@@ -422,18 +436,38 @@
         selectedProduct = product;
     }
 
-    private void CloseProductDetails()
+    private async Task AddToCart(InventoryProduct product)
     {
-        selectedProduct = null;
+        try
+        {
+            var dbProduct = await ProductSvc.GetByIdAsync(product.Id);
+
+            if (dbProduct == null)
+            {
+                errorMessage = "Product could not be found.";
+                return;
+            }
+
+            errorMessage = CartSvc.Add(dbProduct) ?? "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unable to add product to cart: {ex.Message}";
+        }
     }
 
-    private void EditProduct(InventoryProduct product)
-    {
-        if (!Auth.IsAuthenticated)
+        private void CloseProductDetails()
         {
-            Nav.NavigateTo("/login?returnUrl=/inventory");
-            return;
+            selectedProduct = null;
         }
+
+        private void EditProduct(InventoryProduct product)
+        {
+            if (!Auth.IsAuthenticated)
+            {
+                Nav.NavigateTo("/login?returnUrl=/inventory");
+                return;
+            }
 
         editingId = product.Id;
         selectedProduct = null;
@@ -918,5 +952,26 @@
 
         .inventory-delete-confirmation .inventory-form-actions {
             margin-top: 12px;
+        }
+
+        .inventory-cart-button {
+            background-color: #e0f7e9;
+            color: #166534;
+            border: 1px solid #86cfa3;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .inventory-cart-button:hover:not(:disabled) {
+            background-color: #bbefcf;
+        }
+
+        .inventory-cart-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
