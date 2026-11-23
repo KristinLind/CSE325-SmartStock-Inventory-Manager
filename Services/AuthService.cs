@@ -18,6 +18,9 @@ public class AuthService(
     public static string? DemoPassword =>
         Environment.GetEnvironmentVariable("SMARTSTOCK_ADMIN_PASSWORD");
 
+    public const string GraderDemoEmail = "demo@smartstock.com";
+    public const string GraderDemoPassword = "SmartStockDemo2026!";
+
     public User? CurrentUser { get; private set; }
     public bool IsAuthenticated => CurrentUser is not null;
 
@@ -106,7 +109,22 @@ public class AuthService(
                 await db.SaveChangesAsync();
             }
         }
+        // Create a separate demonstration account for graders and teammates.
+        var graderEmail = GraderDemoEmail.ToLowerInvariant();
 
+        if (!await db.Users.AnyAsync(u => u.Email.ToLower() == graderEmail))
+        {
+            db.Users.Add(new User
+            {
+                FullName = "SmartStock Demo User",
+                Email = GraderDemoEmail,
+                PasswordHash = HashPassword(GraderDemoPassword),
+                Role = "Manager",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await db.SaveChangesAsync();
+        }
         // Ensure Postgres identity sequence is synced after EF HasData explicit category IDs (1..4)
         if (provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
         {
